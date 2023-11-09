@@ -24,6 +24,9 @@ source ./tool.sh
 |7       |four of a kind |
 |8       |straight flush |
 
+* Ace cannot be in the middle of a straight or a straight flush
+* degrade into a high card or a flush
+
 1. check straight and flush
     - 8 straight flush
     - 4 straight
