@@ -31,12 +31,12 @@ module tb_poker();
 	
 	
 	initial	begin
-		$readmemh("i0.dat", i0mem);
-		$readmemh("i1.dat", i1mem);
-		$readmemh("i2.dat", i2mem);
-		$readmemh("i3.dat", i3mem);
-		$readmemh("i4.dat", i4mem);
-		$readmemh("golden.dat",typemem);
+		$readmemh("./dat/i0.dat", i0mem);
+		$readmemh("./dat/i1.dat", i1mem);
+		$readmemh("./dat/i2.dat", i2mem);
+		$readmemh("./dat/i3.dat", i3mem);
+		$readmemh("./dat/i4.dat", i4mem);
+		$readmemh("./dat/golden.dat",typemem);
 
 		
 	end
