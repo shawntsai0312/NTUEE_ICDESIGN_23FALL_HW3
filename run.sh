@@ -1,0 +1,1 @@
+vcs tb_poker.v poker.v lib.v –full64 –R –debug_access+all +v2k
