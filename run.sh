@@ -1,1 +1,0 @@
-vcs ./src/tb_poker.v ./src/poker.v ./src/lib.v -full64 -R -debug_access+all +v2k
