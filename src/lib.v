@@ -66,6 +66,7 @@ module AN2(Z,A,B);
            ( B *> Z ) = ( Tp_B_Z );
        endspecify
 endmodule
+
 module DRIVER(Z,A);
             output Z;
        input A;
@@ -378,6 +379,7 @@ module ND3(Z,A,B,C);
            ( C *> Z ) = ( Tp_C_Z );
        endspecify
 endmodule
+
 module ND4(Z,A,B,C,D);
        output Z;
        input A,B,C,D;
@@ -402,6 +404,7 @@ module ND4(Z,A,B,C,D);
            ( D *> Z ) = ( Tp_D_Z );
        endspecify
 endmodule
+
 module NR2(Z,A,B);
         output Z;
        input A,B;
@@ -539,6 +542,3 @@ module OR4(Z,A,B,C,D);
            ( D *> Z ) = ( Tp_D_Z );
        endspecify
 endmodule
-
-
-
