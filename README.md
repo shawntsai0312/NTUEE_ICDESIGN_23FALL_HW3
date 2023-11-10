@@ -8,7 +8,9 @@ source ./tool.sh
 
 #### How To Run
 ```shell
-./run.sh
+cd src
+./check.sh
+./sim.sh
 ```
 
 #### Cases
