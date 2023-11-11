@@ -43,3 +43,4 @@ cd src
     - 0 high card
 
 * avoid CASCADING LOGIC GATES
+* Is sorting necessary ?

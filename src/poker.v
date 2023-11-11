@@ -152,28 +152,32 @@ module switchCase(out, cond0, cond1, cond2, cond3, in0, in1, in2, in3, inDefault
 
 	wire temp01, temp12, temp23;
 	// avoid cascading mux
-	// MUX21H Mux0(temp01,	 inDefault, in0, cond0);
-	// MUX21H Mux1(temp12,		temp01,	in1, cond1);
-	// MUX21H Mux2(temp23,		temp12,	in2, cond2);
-	// MUX21H Mux3(   out,		temp23,	in3, cond3);
-	wire iCond0, iCond1, iCond2, iCond3;
-	IV I0(iCond0,cond0);
-	IV i1(iCond1,cond1);
-	IV i2(iCond2,cond2);
-	IV i3(iCond3,cond3);
+	MUX21H Mux0(temp01,	 inDefault, in0, cond0);
+	MUX21H Mux1(temp12,		temp01,	in1, cond1);
+	MUX21H Mux2(temp23,		temp12,	in2, cond2);
+	MUX21H Mux3(   out,		temp23,	in3, cond3);
+	// wire iCond0, iCond1, iCond2, iCond3;
+	// IV I0(iCond0,cond0);
+	// IV i1(iCond1,cond1);
+	// IV i2(iCond2,cond2);
+	// IV i3(iCond3,cond3);
 
 endmodule
 
-module comparator2(out, in1, in2);
+module comparator2(out1, out2, outEq, in1, in2);
+	// out12 = (in1 >= in2)
+	// out21 = (in2 >= in1)
 	input [3:0] in1, in2;
-	output out;
+	output out1, out2, outEq;
+
+	// sameBitChecker 
 
 	wire flag0, flag1, flag2, flag3;
 	EO NotEqual0(flag0,in1[0],in2[0]);
 	EO NotEqual1(flag1,in1[1],in2[1]);
 	EO NotEqual2(flag2,in1[2],in2[2]);
 	EO NotEqual3(flag3,in1[3],in2[3]);
-	switchCase SC(out, flag0, flag1, flag2, flag3, in1[0], in1[1], in1[2], in1[3], 1);
+	// switchCase SC(out12, flag0, flag1, flag2, flag3, in1[0], in1[1], in1[2], in1[3], 1);
 endmodule
 
 module add4Bit(out, in0, in1, in2, in3);
