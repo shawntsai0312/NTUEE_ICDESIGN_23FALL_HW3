@@ -42,3 +42,4 @@ cd src
     - 1 one pair
     - 0 high card
 
+* avoid CASCADING LOGIC GATES
