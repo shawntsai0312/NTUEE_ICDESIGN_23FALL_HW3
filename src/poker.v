@@ -8,13 +8,7 @@ module poker(type, i0, i1, i2, i3, i4);
 
 // flush checker
 	wire flush;
-
-	// check bit[5]s are the same
-	wire out_smc5, out_smc4;
-	sameBitChecker SMC5(out_smc5, i0[5], i1[5], i2[5], i3[5], i4[5]);
-	sameBitChecker SMC4(out_smc4, i0[4], i1[4], i2[4], i3[4], i4[4]);
-
-	AN2 SameSuit(flush, out_smc5, out_smc4);
+	flushChecker FC(flush, in0[5:4], in1[5:4], in2[5:4], in3[5:4], in4[5:4]);
 
 // rank sorter
 	// sort ik into iks (increasing order);
@@ -101,6 +95,17 @@ module poker(type, i0, i1, i2, i3, i4);
 // output selector
 	
 	
+endmodule
+
+module flushChecker(out, in0, in1, in2, in3, in4);
+	input [1:0] in0, in1, in2, in3, in4;
+	output out;
+
+	wire out_smc1, out_smc0;
+	sameBitChecker SMC1(out_smc1, in0[1], in1[1], in2[1], in3[1], in4[1]);
+	sameBitChecker SMC0(out_smc0, in0[0], in1[0], in2[0], in3[0], in4[0]);
+
+	AN2 sameBitChecker(out, out_smc1, out_smc0);
 endmodule
 
 module sameBitChecker(out, in0, in1, in2, in3, in4);
