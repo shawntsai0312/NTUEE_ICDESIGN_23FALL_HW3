@@ -161,7 +161,6 @@ module switchCase(out, cond0, cond1, cond2, cond3, in0, in1, in2, in3, inDefault
 	// IV i1(iCond1,cond1);
 	// IV i2(iCond2,cond2);
 	// IV i3(iCond3,cond3);
-
 endmodule
 
 module comparator2(out1, out2, outEq, in1, in2);
@@ -170,7 +169,9 @@ module comparator2(out1, out2, outEq, in1, in2);
 	input [3:0] in1, in2;
 	output out1, out2, outEq;
 
-	// sameBitChecker 
+	// outEq by sameBitChecker 
+	// out1, out2 by switchCase, but the delay is high
+	// alternative solution should be considered
 
 	wire flag0, flag1, flag2, flag3;
 	EO NotEqual0(flag0,in1[0],in2[0]);
