@@ -8,7 +8,7 @@ module poker(type, i0, i1, i2, i3, i4);
 
 // flush checker
 	wire flush;
-	flushChecker FC(flush, in0[5:4], in1[5:4], in2[5:4], in3[5:4], in4[5:4]);
+	flushChecker FC(flush, i0[5:4], i1[5:4], i2[5:4], i3[5:4], i4[5:4]);
 
 // rank sorter
 	// sort ik into iks (increasing order);
@@ -58,35 +58,35 @@ module poker(type, i0, i1, i2, i3, i4);
 	Equal0Checker E0_1(Equal0_1, smallerCounter1);
 	Equal0Checker E0_2(Equal0_2, smallerCounter2);
 	Equal0Checker E0_3(Equal0_3, smallerCounter3);
-	switchCaseBus SCB0(i0Sorted, Equal0_0, Equal0_1, Equal0_2, Equal0_3, i0, i1, i2, i3, i4);
+	switchCaseBus SCB0(i0Sorted, Equal0_0, Equal0_1, Equal0_2, Equal0_3, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
 	wire Equal1_0, Equal1_1, Equal1_2, Equal1_3, Equal1_4;
 	Equal1Checker E1_0(Equal1_0, smallerCounter0);
 	Equal1Checker E1_1(Equal1_1, smallerCounter1);
 	Equal1Checker E1_2(Equal1_2, smallerCounter2);
 	Equal1Checker E1_3(Equal1_3, smallerCounter3);
-	switchCaseBus SCB1(i0Sorted, Equal1_0, Equal1_1, Equal1_2, Equal1_3, i0, i1, i2, i3, i4);
+	switchCaseBus SCB1(i1Sorted, Equal1_0, Equal1_1, Equal1_2, Equal1_3, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
 	wire Equal2_0, Equal2_1, Equal2_2, Equal2_3, Equal2_4;
 	Equal2Checker E2_0(Equal2_0, smallerCounter0);
 	Equal2Checker E2_1(Equal2_1, smallerCounter1);
 	Equal2Checker E2_2(Equal2_2, smallerCounter2);
 	Equal2Checker E2_3(Equal2_3, smallerCounter3);
-	switchCaseBus SCB2(i0Sorted, Equal2_0, Equal2_1, Equal2_2, Equal2_3, i0, i1, i2, i3, i4);
+	switchCaseBus SCB2(i2Sorted, Equal2_0, Equal2_1, Equal2_2, Equal2_3, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
 	wire Equal3_0, Equal3_1, Equal3_2, Equal3_3, Equal3_4;
 	Equal3Checker E3_0(Equal3_0, smallerCounter0);
 	Equal3Checker E3_1(Equal3_1, smallerCounter1);
 	Equal3Checker E3_2(Equal3_2, smallerCounter2);
 	Equal3Checker E3_3(Equal3_3, smallerCounter3);
-	switchCaseBus SCB3(i0Sorted, Equal3_0, Equal3_1, Equal3_2, Equal3_3, i0, i1, i2, i3, i4);
+	switchCaseBus SCB3(i3Sorted, Equal3_0, Equal3_1, Equal3_2, Equal3_3, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
 	wire Equal4_0, Equal4_1, Equal4_2, Equal4_3, Equal4_4;
 	Equal4Checker E4_0(Equal4_0, smallerCounter0);
 	Equal4Checker E4_1(Equal4_1, smallerCounter1);
 	Equal4Checker E4_2(Equal4_2, smallerCounter2);
 	Equal4Checker E4_3(Equal4_3, smallerCounter3);
-	switchCaseBus SCB4(i0Sorted, Equal4_0, Equal4_1, Equal4_2, Equal4_3, i0, i1, i2, i3, i4);
+	switchCaseBus SCB4(i4Sorted, Equal4_0, Equal4_1, Equal4_2, Equal4_3, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 	
 
 
@@ -124,8 +124,8 @@ module sameBitChecker(out, in0, in1, in2, in3, in4);
 endmodule
 
 module switchCaseBus(out, cond0, cond1, cond2, cond3, in0, in1, in2, in3, inDefault);
-	input cond0, cond1, cond2, cond3, in0;
-	input [3:0] in1, in2, in3, inDefault;
+	input cond0, cond1, cond2, cond3;
+	input [3:0] in0, in1, in2, in3, inDefault;
 	output [3:0] out;
 
 	switchCase SC0(out[0], cond0, cond1, cond2, cond3, in0[0], in1[0], in2[0], in3[0], inDefault[0]);
@@ -152,10 +152,10 @@ module switchCase(out, cond0, cond1, cond2, cond3, in0, in1, in2, in3, inDefault
 
 	wire temp01, temp12, temp23;
 	// avoid cascading mux
-	// MUX21H Mux0(temp01,	 inDefault, in0, cond0);
-	// MUX21H Mux1(temp12,		temp01,	in1, cond1);
-	// MUX21H Mux2(temp23,		temp12,	in2, cond2);
-	// MUX21H Mux3(   out,		temp23,	in3, cond3);
+	MUX21H Mux0(temp01,	 inDefault, in0, cond0);
+	MUX21H Mux1(temp12,		temp01,	in1, cond1);
+	MUX21H Mux2(temp23,		temp12,	in2, cond2);
+	MUX21H Mux3(   out,		temp23,	in3, cond3);
 	wire iCond0, iCond1, iCond2, iCond3;
 	IV I0(iCond0,cond0);
 	IV i1(iCond1,cond1);

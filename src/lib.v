@@ -1,4 +1,25 @@
 `timescale 1ns/1ps
+module AN2(Z,A,B);
+            output Z;
+       input A,B;
+
+       // netlist
+       and g1(Z,A,B);
+
+       // specify block
+       specify
+
+           // delay parameters
+
+           specparam Tp_A_Z = 0.225;
+           specparam Tp_B_Z = 0.225;
+
+           // path delay
+           ( A *> Z ) = ( Tp_A_Z );
+           ( B *> Z ) = ( Tp_B_Z );
+       endspecify
+endmodule
+
 module AN3(Z,A,B,C);
       output Z;
        input A,B,C;
@@ -21,6 +42,7 @@ module AN3(Z,A,B,C);
            ( C *> Z ) = ( Tp_C_Z );
        endspecify
 endmodule
+
 module AN4(Z,A,B,C,D);
       output Z;
        input A,B,C,D;
@@ -46,27 +68,6 @@ module AN4(Z,A,B,C,D);
        endspecify
 endmodule
 
-module AN2(Z,A,B);
-            output Z;
-       input A,B;
-
-       // netlist
-       and g1(Z,A,B);
-
-       // specify block
-       specify
-
-           // delay parameters
-
-           specparam Tp_A_Z = 0.225;
-           specparam Tp_B_Z = 0.225;
-
-           // path delay
-           ( A *> Z ) = ( Tp_A_Z );
-           ( B *> Z ) = ( Tp_B_Z );
-       endspecify
-endmodule
-
 module DRIVER(Z,A);
             output Z;
        input A;
@@ -85,7 +86,6 @@ module DRIVER(Z,A);
            ( A *> Z ) = ( Tp_A_Z );
        endspecify
 endmodule
-
 
 module DRIVER2(Z,A);
           output Z;
@@ -152,7 +152,6 @@ module EN3(Z,A,B,C);
        endspecify
 endmodule
 
-
 module EO(Z,A,B);
          output Z;
        input A,B;
@@ -165,7 +164,6 @@ specparam Tp_B_Z=0.308;
 ( B *> Z ) = ( Tp_B_Z,Tp_B_Z );
 endspecify
 endmodule
-
 
 module EO3(Z,A,B,C);
            output Z;
