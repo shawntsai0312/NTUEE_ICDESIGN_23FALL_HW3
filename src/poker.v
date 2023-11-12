@@ -5,94 +5,12 @@ module poker(type, i0, i1, i2, i3, i4);
 	input  [5:0] i0, i1, i2, i3, i4;
 	output [3:0] type;
 //---------------------------------------------------
-
-// flush checker
 	wire flush;
 	flushChecker FC(flush, i0[5:4], i1[5:4], i2[5:4], i3[5:4], i4[5:4]);
 
-// rank sorter
-	// sort ik into iks (increasing order);
-	// concept : insertion sort
+	wire 4ofAKind;
+	4ofAKindChecker 4ofK(4ofAKind, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
-	// wire cij = (i>=j)? 1:0
-	wire c01,c02,c03,c04,c12,c13,c14,c23,c24,c34;
-	wire c10,c20,c30,c40,c21,c31,c41,c32,c42,c43;
-
-	comparator2 Compare01(c01,i0[3:0],i1[3:0]);
-	comparator2 Compare02(c02,i0[3:0],i2[3:0]);
-	comparator2 Compare03(c03,i0[3:0],i3[3:0]);
-	comparator2 Compare04(c04,i0[3:0],i4[3:0]);
-	IV Iv01(c10,c01);
-	IV Iv02(c20,c02);
-	IV Iv03(c30,c03);
-	IV Iv04(c40,c04);
-
-	comparator2 Compare12(c12,i1[3:0],i2[3:0]);
-	comparator2 Compare13(c13,i1[3:0],i3[3:0]);
-	comparator2 Compare14(c14,i1[3:0],i4[3:0]);
-	IV Iv12(c21,c12);
-	IV Iv13(c31,c13);
-	IV Iv14(c41,c14);
-
-	comparator2 Compare23(c23,i2[3:0],i3[3:0]);
-	comparator2 Compare24(c24,i2[3:0],i4[3:0]);
-	IV Iv23(c32,c23);
-	IV Iv24(c42,c24);
-
-	comparator2 Compare34(c34,i3[3:0],i4[3:0]);
-	IV Iv34(c43,c34);
-
-	// wire bus = number of inputs smaller than ik
-	wire [2:0] smallerCounter0, smallerCounter1, smallerCounter2, smallerCounter3, smallerCounter4;
-	add4Bit A4B0(smallerCounter0, c01, c02, c03, c04);
-	add4Bit A4B1(smallerCounter1, c10, c12, c13, c14);
-	add4Bit A4B2(smallerCounter2, c20, c21, c23, c24);
-	add4Bit A4B3(smallerCounter3, c30, c31, c32, c34);
-	add4Bit A4B4(smallerCounter4, c40, c41, c42, c43);
-
-	// wire with sorted order
-	wire [3:0] i0Sorted, i1Sorted, i2Sorted, i3Sorted, i4Sorted;
-
-	wire Equal0_0, Equal0_1, Equal0_2, Equal0_3, Equal0_4;
-	Equal0Checker E0_0(Equal0_0, smallerCounter0);
-	Equal0Checker E0_1(Equal0_1, smallerCounter1);
-	Equal0Checker E0_2(Equal0_2, smallerCounter2);
-	Equal0Checker E0_3(Equal0_3, smallerCounter3);
-	switchCaseBus SCB0(i0Sorted, Equal0_0, Equal0_1, Equal0_2, Equal0_3, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-
-	wire Equal1_0, Equal1_1, Equal1_2, Equal1_3, Equal1_4;
-	Equal1Checker E1_0(Equal1_0, smallerCounter0);
-	Equal1Checker E1_1(Equal1_1, smallerCounter1);
-	Equal1Checker E1_2(Equal1_2, smallerCounter2);
-	Equal1Checker E1_3(Equal1_3, smallerCounter3);
-	switchCaseBus SCB1(i1Sorted, Equal1_0, Equal1_1, Equal1_2, Equal1_3, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-
-	wire Equal2_0, Equal2_1, Equal2_2, Equal2_3, Equal2_4;
-	Equal2Checker E2_0(Equal2_0, smallerCounter0);
-	Equal2Checker E2_1(Equal2_1, smallerCounter1);
-	Equal2Checker E2_2(Equal2_2, smallerCounter2);
-	Equal2Checker E2_3(Equal2_3, smallerCounter3);
-	switchCaseBus SCB2(i2Sorted, Equal2_0, Equal2_1, Equal2_2, Equal2_3, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-
-	wire Equal3_0, Equal3_1, Equal3_2, Equal3_3, Equal3_4;
-	Equal3Checker E3_0(Equal3_0, smallerCounter0);
-	Equal3Checker E3_1(Equal3_1, smallerCounter1);
-	Equal3Checker E3_2(Equal3_2, smallerCounter2);
-	Equal3Checker E3_3(Equal3_3, smallerCounter3);
-	switchCaseBus SCB3(i3Sorted, Equal3_0, Equal3_1, Equal3_2, Equal3_3, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-
-	wire Equal4_0, Equal4_1, Equal4_2, Equal4_3, Equal4_4;
-	Equal4Checker E4_0(Equal4_0, smallerCounter0);
-	Equal4Checker E4_1(Equal4_1, smallerCounter1);
-	Equal4Checker E4_2(Equal4_2, smallerCounter2);
-	Equal4Checker E4_3(Equal4_3, smallerCounter3);
-	switchCaseBus SCB4(i4Sorted, Equal4_0, Equal4_1, Equal4_2, Equal4_3, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-	
-
-
-// straight checker
-
-// output selector
 	
 	
 endmodule
@@ -101,16 +19,34 @@ module flushChecker(out, in0, in1, in2, in3, in4);
 	input [1:0] in0, in1, in2, in3, in4;
 	output out;
 
-	wire out_smc1, out_smc0;
-	sameBitChecker SMC1(out_smc1, in0[1], in1[1], in2[1], in3[1], in4[1]);
-	sameBitChecker SMC0(out_smc0, in0[0], in1[0], in2[0], in3[0], in4[0]);
-
-	AN2 sameBitChecker(out, out_smc1, out_smc0);
+	wire s5bc0, s5bc1;
+	same5BitChecker S5BC0(s5bc0, in0[0], in1[0], in2[0], in3[0], in4[0]);
+	same5BitChecker S5BC1(s5bc1, in0[1], in1[1], in2[1], in3[1], in4[1]);
+	
+	AN2 an2(out, s5bc0, s5bc1);
 endmodule
 
-module sameBitChecker(out, in0, in1, in2, in3, in4);
+module 4ofAKindChecker(out, in0, in1, in2, in3, in4);
+	input [3:0] in0, in1, in2, in3, in4;
+	output out;
+
+	wire i4rc0123, i4rc0124, i4rc0134, i4rc0234, i4rc1234;
+	identical4RanksChecker(i4rc0123, in0, in1, in2, in3);
+	identical4RanksChecker(i4rc0124, in0, in1, in2, in4);
+	identical4RanksChecker(i4rc0134, in0, in1, in3, in4);
+	identical4RanksChecker(i4rc0234, in0, in2, in3, in4);
+	identical4RanksChecker(i4rc1234, in1, in2, in3, in4);
+
+	wire temp;
+	OR3 or31(temp, i4rc0123, i4rc0124, i4rc0134);
+	OR3 or32( out,     temp, i4rc0234, i4rc1234);
+endmodule
+
+module same5BitChecker(out, in0, in1, in2, in3, in4);
 	input in0, in1, in2, in3, in4;
 	output out;
+	// F = abcde + (a+b+c+d+e)'
+	//	 = [(abcde)' (a+b+c+d+e)]'
 
 	wire and3, nand5;
 	AN3 an3(and3, 	 in0, in1, in2);
@@ -123,124 +59,84 @@ module sameBitChecker(out, in0, in1, in2, in3, in4);
 	ND2 nd2(out, nand5, tempOr5);
 endmodule
 
-module switchCaseBus(out, cond0, cond1, cond2, cond3, in0, in1, in2, in3, inDefault);
-	input cond0, cond1, cond2, cond3;
-	input [3:0] in0, in1, in2, in3, inDefault;
-	output [3:0] out;
-
-	switchCase SC0(out[0], cond0, cond1, cond2, cond3, in0[0], in1[0], in2[0], in3[0], inDefault[0]);
-	switchCase SC1(out[1], cond0, cond1, cond2, cond3, in0[1], in1[1], in2[1], in3[1], inDefault[1]);
-	switchCase SC2(out[2], cond0, cond1, cond2, cond3, in0[2], in1[2], in2[2], in3[2], inDefault[2]);
-	switchCase SC3(out[3], cond0, cond1, cond2, cond3, in0[3], in1[3], in2[3], in3[3], inDefault[3]);
-endmodule
-
-module switchCase(out, cond0, cond1, cond2, cond3, in0, in1, in2, in3, inDefault);
-	// similar to C++ switch case
-	input cond0, cond1, cond2, cond3, in0, in1, in2, in3, inDefault;
-	output out;
-	/*
-	cond0 is the highest command, if it is true => return in0
-	out = cond0  & in0
-		| cond0' & (  cond1  & in1
-					| cond1' & ( cond2  & in2
-								|cond2' & ( cond3  & in3
-										   |cond3' & inDefault
-										  )
-							   )
-		 		   )
-	*/
-
-	wire temp01, temp12, temp23;
-	// avoid cascading mux
-	MUX21H Mux0(temp01,	 inDefault, in0, cond0);
-	MUX21H Mux1(temp12,		temp01,	in1, cond1);
-	MUX21H Mux2(temp23,		temp12,	in2, cond2);
-	MUX21H Mux3(   out,		temp23,	in3, cond3);
-	wire iCond0, iCond1, iCond2, iCond3;
-	IV I0(iCond0,cond0);
-	IV i1(iCond1,cond1);
-	IV i2(iCond2,cond2);
-	IV i3(iCond3,cond3);
-
-endmodule
-
-module comparator2(out, in1, in2);
-	input [3:0] in1, in2;
-	output out;
-
-	wire flag0, flag1, flag2, flag3;
-	EO NotEqual0(flag0,in1[0],in2[0]);
-	EO NotEqual1(flag1,in1[1],in2[1]);
-	EO NotEqual2(flag2,in1[2],in2[2]);
-	EO NotEqual3(flag3,in1[3],in2[3]);
-	switchCase SC(out, flag0, flag1, flag2, flag3, in1[0], in1[1], in1[2], in1[3], 1);
-endmodule
-
-module add4Bit(out, in0, in1, in2, in3);
+module same4BitChecker(out, in0, in1, in2, in3);
 	input in0, in1, in2, in3;
-	output [2:0] out;
+	output out;
+	// F = abcd + (a+b+c+d)'
 
-	wire xor3;
-	EO3 eo3(xor3, in0, in1, in2); // EO3 should be avoid
-	EO eo2(out[0], xor3, in3);
-
-	wire and01, and23;
-	AN2 an201(and01, in0, in1);
-	AN2 an223(and23, in2, in3);
-
-	wire nor31, nor32, and4;
-	NR3 nr31(nor31, in2, in3, and01);
-	NR3 nr32(nor32, in0, in1, and23);
+	wire and4;
 	AN4 an4(and4, in0, in1, in2, in3);
-	NR3 nr3o(out[1], nor31, nor32, and4);
-	
-	assign out[2] = and4;
+
+	wire nor4;
+	NR4 nr4(nor4, in0, in1, in2, in3);
+
+	OR2 or2(out, and4, nor4);
 endmodule
 
-module Equal0Checker(out,in);
-	// check in == 000
-	input [2:0] in;
+module same3BitChecker(out, in0, in1, in2);
+	input in0, in1, in2;
 	output out;
+	// F = abc + (a+b+c)'
 
-	NR3 nr3(out,in[0],in[1],in[2]);
+	wire and3;
+	AN3 an3(and3, in0, in1, in2);
+
+	wire nor3;
+	NR3 nr3(nor3, in0, in1, in2);
+
+	OR2 or2(out, and3, nor3);
 endmodule
 
-module Equal1Checker(out,in);
-	// check in == 001
-	input [2:0] in;
+module same2BitChecker(out, in0, in1);
+	input in0, in1;
 	output out;
+	// F = ab + (a+b)'
+	// although we can use xnor, but the delay is too high !!!
+	// this module can lower the delay from 1.1 to 0.527
+	wire and2;
+	AN2 an2(and2, in0, in1);
 
-	wire not0;
-	IV iv0(not0,in[0]);
-	NR3 nr3(out,not0,in[1],in[2]);
+	wire nor2;
+	NR2 nr2(nor2, in0, in1);
+
+	OR2 or2(out, and2, nor2);
 endmodule
 
-module Equal2Checker(out,in);
-	// check in == 010
-	input [2:0] in;
+module identical4RanksChecker(out, in0, in1, in2, in3)
+	input [3:0] in0, in1, in2, in3;
 	output out;
 
-	wire not1;
-	IV iv1(not1,in[1]);
-	NR3 nr3(out,in[0],not1,in[2]);
+	wire s4bc0, s4bc1, s4bc2, s4bc3;
+	same4BitChecker S4BC0(s4bc0, in0[0], in1[0], in2[0], in3[0]);
+	same4BitChecker S4BC1(s4bc1, in0[1], in1[1], in2[1], in3[1]);
+	same4BitChecker S4BC2(s4bc2, in0[2], in1[2], in2[2], in3[2]);
+	same4BitChecker S4BC3(s4bc3, in0[3], in1[3], in2[3], in3[3]);
+
+	AN4 an4(out, s4bc0, s4bc1, s4bc2, s4bc3);
 endmodule
 
-module Equal3Checker(out,in);
-	// check in == 011
-	input [2:0] in;
+module identical3RanksChecker(out, in0, in1, in2)
+	input [3:0] in0, in1, in2;
 	output out;
 
-	wire not2;
-	IV iv2(not2,in[2]);
-	AN3 an3(out,in[0],in[1],not2);
+	wire s3bc0, s3bc1, s3bc2, s3bc3;
+	same3BitChecker S3BC0(s3bc0, in0[0], in1[0], in2[0]);
+	same3BitChecker S3BC1(s3bc1, in0[1], in1[1], in2[1]);
+	same3BitChecker S3BC2(s3bc2, in0[2], in1[2], in2[2]);
+	same3BitChecker S3BC3(s3bc3, in0[3], in1[3], in2[3]);
+
+	AN4 an4(out, s3bc0, s3bc1, s3bc2, s3bc3);
 endmodule
 
-module Equal4Checker(out,in);
-	// check in == 100
-	input [2:0] in;
+module identical2RanksChecker(out, in0, in1)
+	input [3:0] in0, in1;
 	output out;
 
-	wire not2;
-	IV iv2(not2,in[2]);
-	NR3 nr3(out,in[0],in[1],not2);
+	wire s2bc0, s2bc1, s2bc2, s2bc3;
+	same2BitChecker S2BC0(s2bc0, in0[0], in1[0]);
+	same2BitChecker S2BC1(s2bc1, in0[1], in1[1]);
+	same2BitChecker S2BC2(s2bc2, in0[2], in1[2]);
+	same2BitChecker S2BC3(s2bc3, in0[3], in1[3]);
+
+	AN4 an4(out, s2bc0, s2bc1, s2bc2, s2bc3);
 endmodule
