@@ -34,12 +34,12 @@ cd src
 * straight checker
   * normal case : find min and max, the difference should be 4
   * 10,11,12,13,1 : directly determine it
-* identical 4 cards checker
+* identical 4 ranks checker
   * input four cards and determine if they are the same rank, parallel*5
   * if one of them is true, then it's 4 of a kind
 * full house checker
   * combine three of a kind checker and one pair checker, parallel*10
-* identical 3 cards checker
+* identical 3 ranks checker
   * input three cards and determine if they are the same rank, parallel*10
   * if the output of full house checker and four of a kind checker are both false, then it's true
 * two pair checker

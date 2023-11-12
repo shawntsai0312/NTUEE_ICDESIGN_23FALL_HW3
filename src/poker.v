@@ -161,6 +161,62 @@ module threeKindPossible(out, in0, in1, in2, in3, in4);
 	OR10(out, i3rc012, i3rc013, i3rc014, i3rc023,i3rc024, i3rc034, i3rc123, i3rc124, i3rc134, i3rc234);
 endmodule
 
+module twoPairsChecker(out, in0, in1, in2, in3, in4);
+	input [3:0] in0, in1, in2, in3, in4;
+	output out;
+
+	wire sub0123, sub0124, sub0134, sub0234, sub1234;
+	twoPairsSubChecker(sub0123, in0, in1, in2, in3);
+	twoPairsSubChecker(sub0124, in0, in1, in2, in4);
+	twoPairsSubChecker(sub0134, in0, in1, in3, in4);
+	twoPairsSubChecker(sub0234, in0, in2, in3, in4);
+	twoPairsSubChecker(sub1234, in1, in2, in3, in4);
+
+	OR5(out, sub0123, sub0124, sub0134, sub0234, sub1234);
+endmodule
+
+module twoPairsSubChecker(out, in0, in1, in2, in3);
+	input [3:0] in0, in1, in2, in3;
+	output out;
+
+	wire same01, same02, same03, same12, same13, same23;
+	identical2RanksChecker(same01, in0, in1);
+	identical2RanksChecker(same02, in0, in2);
+	identical2RanksChecker(same03, in0, in3);
+	identical2RanksChecker(same12, in1, in2);
+	identical2RanksChecker(same13, in1, in3);
+	identical2RanksChecker(same23, in2, in3);
+
+	wire same0123, notSame0123;
+	identical4RanksChecker(same0123, in0, in1, in2, in3);
+
+	wire case0, case1, case2, case3, case4, case5;
+
+	// case0 : check if rank0 = rank1 = x and rank2 = rank3 = y but x != y
+	AN2(case0, same01, same23);
+
+	// case1 :  check if rank0 = rank2 = x and rank1 = rank3 = y but x != y]
+	AN2(case1, same02, same13);
+
+	// case2 : check if rank0 = rank3 = x and rank1 = rank2 = y but x != y
+	AN2(case2, same03, same12);
+
+	// case3 : check if rank1 = rank2 = x and rank0 = rank3 = y but x != y
+	AN2(case3, same12, same03);
+
+	// case4 : check if rank1 = rank3 = x and rank0 = rank2 = y but x != y
+	AN2(case4, same13, same02);
+
+	// case5 : check if rank2 = rank3 = x and rank0 = rank1 = y but x != y
+	AN2(case5, same23, same01);
+
+	// f = (6 cases or) notSame
+	//   = [(6 cases nor) + same]'
+	wire nor6;
+	NR6(nor6, case0, case1, case2, case3, case4, case5);
+	NR2(out, nor6, same);
+endmodule
+
 module same5BitChecker(out, in0, in1, in2, in3, in4);
 	input in0, in1, in2, in3, in4;
 	output out;
@@ -271,6 +327,20 @@ module OR5(Z,A,B,C,D,E);
 	NR3(nor3, A, B, C);
 	NR2(nor2, D, E);
 	ND2(Z, nor3, nor2);
+endmodule
+
+module NR6(Z,A,B,C,D,E,F);
+	// nor 6
+	// f = (a+b+c+d+e+f)'
+	//   = (a+b+c)'(d+e+f)'
+	// delay = 0.574
+	input A, B, C, D, E, F;
+	output Z;
+	
+	wire nor31, nor32;
+	NR3(nor31, A, B, C);
+	NR3(nor32, D, E, F);
+	AN2(Z, nor31, nor32);
 endmodule
 
 module OR10(Z,A,B,C,D,E,F,G,H,I,J);
