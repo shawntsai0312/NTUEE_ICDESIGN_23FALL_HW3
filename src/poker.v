@@ -15,8 +15,7 @@ module poker(type, i0, i1, i2, i3, i4);
 	IV(notFour, fourOfAKind);
 
 	wire fullHouse, notFull;
-	fullHouseChecker(fullHouse, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-	IV(notFull, fullHouse);
+	fullHouseChecker(fullHouse, notFull, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
 	wire threeOfAKind, threeOfAKinkPossible, notThree, notThreePossible;
 	threeOfAKindPossibleChecker(threeOfAKinkPossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
@@ -52,9 +51,6 @@ endmodule
 module straightChecker(out, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
 	output out;
-
-
-
 endmodule
 
 module fourOfAKindChecker(out, in0, in1, in2, in3, in4);
@@ -71,72 +67,76 @@ module fourOfAKindChecker(out, in0, in1, in2, in3, in4);
 	OR5(out, i4rc0123, i4rc0124, i4rc0134, i4rc0234, i4rc1234);
 endmodule
 
-module fullHouseChecker(out, in0, in1, in2, in3, in4);
+module fullHouseChecker(out, notOut, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
-	output out;
+	output out, notOut;
 
 	// use ChatGPT to generate those cases in short time
+	// out  = ( & )  + ( & )  + ... + ( & ) 		,delay =  and2 +   or10 = 0.225 + 0.571 = 0.796
+	//	    =[( & )' & ( & )' & ... & ( & )']'		,delay = nand2 + nand10 = 0.176 + 0.571 = 0.747 <-- choose this
+	// out' = ...									,delay = nand2 +  and10 = 0.176 + 0.571 = 0.747 <-- choose this
 	// case0 012, 34
 	wire i3rc012, i2rc34, case0;
 	identical3RanksChecker(i3rc012, in0, in1, in2);
 	identical2RanksChecker( i2rc34, in3, in4);
-	AN2(case0, i3rc012, i2rc34);
+	ND2(case0, i3rc012, i2rc34);
 
 	// case1 013, 24
 	wire i3rc013, i2rc24, case1;
 	identical3RanksChecker(i3rc013, in0, in1, in3);
 	identical2RanksChecker( i2rc24, in2, in4);
-	AN2(case1, i3rc013, i2rc24);
+	ND2(case1, i3rc013, i2rc24);
 
 	// case2 014, 23
 	wire i3rc014, i2rc23, case2;
 	identical3RanksChecker(i3rc014, in0, in1, in4);
 	identical2RanksChecker(i2rc23, in2, in3);
-	AN2(case2, i3rc014, i2rc23);
+	ND2(case2, i3rc014, i2rc23);
 
 	// case3 023, 14
 	wire i3rc023, i2rc14, case3;
 	identical3RanksChecker(i3rc023, in0, in2, in3);
 	identical2RanksChecker(i2rc14, in1, in4);
-	AN2(case3, i3rc023, i2rc14);
+	ND2(case3, i3rc023, i2rc14);
 
 	// case4 024, 13
 	wire i3rc024, i2rc13, case4;
 	identical3RanksChecker(i3rc024, in0, in2, in4);
 	identical2RanksChecker(i2rc13, in1, in3);
-	AN2(case4, i3rc024, i2rc13);
+	ND2(case4, i3rc024, i2rc13);
 
 	// case5 034, 12
 	wire i3rc034, i2rc12, case5;
 	identical3RanksChecker(i3rc034, in0, in3, in4);
 	identical2RanksChecker(i2rc12, in1, in2);
-	AN2(case5, i3rc034, i2rc12);
+	ND2(case5, i3rc034, i2rc12);
 
 	// case6 123, 04
 	wire i3rc123, i2rc04, case6;
 	identical3RanksChecker(i3rc123, in1, in2, in3);
 	identical2RanksChecker(i2rc04, in0, in4);
-	AN2(case6, i3rc123, i2rc04);
+	ND2(case6, i3rc123, i2rc04);
 
 	// case7 124, 03
 	wire i3rc124, i2rc03, case7;
 	identical3RanksChecker(i3rc124, in1, in2, in4);
 	identical2RanksChecker(i2rc03, in0, in3);
-	AN2(case7, i3rc124, i2rc03);
+	ND2(case7, i3rc124, i2rc03);
 
 	// case8 134, 02
 	wire i3rc134, i2rc02, case8;
 	identical3RanksChecker(i3rc134, in1, in3, in4);
 	identical2RanksChecker(i2rc02, in0, in2);
-	AN2(case8, i3rc134, i2rc02);
+	ND2(case8, i3rc134, i2rc02);
 
 	// case9 234, 01
 	wire i3rc234, i2rc01, case9;
 	identical3RanksChecker(i3rc234, in2, in3, in4);
 	identical2RanksChecker(i2rc01, in0, in1);
-	AN2(case9, i3rc234, i2rc01);
+	ND2(case9, i3rc234, i2rc01);
 
-	OR10(out, case0, case1, case2, case3, case4, case5, case6, case7, case8, case9);
+	ND10(   out, case0, case1, case2, case3, case4, case5, case6, case7, case8, case9);
+	AN10(notOut, case0, case1, case2, case3, case4, case5, case6, case7, case8, case9);
 endmodule
 
 module threeOfAKindPossibleChecker(out, in0, in1, in2, in3, in4);
@@ -297,29 +297,34 @@ endmodule
 module same4BitChecker(out, in0, in1, in2, in3);
 	input in0, in1, in2, in3;
 	output out;
-	// F = abcd + (a+b+c+d)'
+	// F = abcd + (a+b+c+d)'			delay = and4 + or2 = 0.371 + 0.300 = 0.671
+	//   = [(abcd)' (a+b+c+d)]'		delay = or4 + iv + nd2 = 0.345 + 0.127 + 0.176 = 0.648
+	// nor4 -> inverter = 0.345 + 0.127 = 0.472
+	// or4 = 0.544
 
-	wire and4;
-	AN4(and4, in0, in1, in2, in3);
+	wire nand4;
+	ND4(nand4, in0, in1, in2, in3);
 
-	wire nor4;
+	wire nor4, or4;
 	NR4(nor4, in0, in1, in2, in3);
+	IV(or4,nor4);
 
-	OR2(out, and4, nor4);
+	ND2(out, nand4, or4);
 endmodule
 
 module same3BitChecker(out, in0, in1, in2);
 	input in0, in1, in2;
 	output out;
-	// F = abc + (a+b+c)'
+	// F = abc + (a+b+c)'		delay = nor3 + or2  = 0.349 + 0.300 = 0.649
+	//   = [(abc)' (a+b+c)]'	delay = or3 + nand2 = 0.430 + 0.176 = 0.606
 
-	wire and3;
-	AN3(and3, in0, in1, in2);
+	wire or3;
+	OR3(or3, in0, in1, in2);
 
-	wire nor3;
-	NR3(nor3, in0, in1, in2);
+	wire nand3;
+	ND3(nand3, in0, in1, in2);
 
-	OR2(out, and3, nor3);
+	ND2(out, or3, nand3);
 endmodule
 
 module same2BitChecker(out, in0, in1);
@@ -405,7 +410,7 @@ module AN5(Z,A,B,C,D,E);
 endmodule
 
 module OR6(Z,A,B,C,D,E,F);
-	// or 5
+	// or6
 	// f = a+b+c+d+e+f
 	//   = ((a+b+c)'(d+e+f)')'
 	// delay = 0.525
@@ -435,14 +440,47 @@ endmodule
 module OR10(Z,A,B,C,D,E,F,G,H,I,J);
 	// or10
 	// F = (a+b+c)+(d+e+f)+(g+h+i+j)
-	//   = [(a+b+c)' (d+e+f)'(g+h+i+j)' ]'
-	// delay 0.571
+	//   = [(a+b+c+0)' (d+e+f+0)'(g+h+i+j)' ]'
+	// delay = nor4 + nand3 = 0.345 + 0.226 = 0.571
+	// nor4 is faster than nor3
 	input A,B,C,D,E;
 	input F,G,H,I,J;
 	output Z;
 	wire nor31, nor32, nor4;
-	NR3(nor31,A,B,C);
-	NR3(nor32,D,E,F);
+	NR4(nor31,A,B,C,0);
+	NR4(nor32,D,E,F,0);
 	NR4(nor4,G,H,I,J);
 	ND3(Z,nor31,nor32,nor4);
+endmodule
+
+module ND10(Z,A,B,C,D,E,F,G,H,I,J);
+	// nand10
+	// F = [(abc)(def)(ghij)]'		, delay =  and4 + nand3 = 0.371 + 0.226 = 0.697
+	//   = [(abc)(def)(gh)(ij)]'	, delay =  and3 + nand4 = 0.275 + 0.296 = 0.571 <-- choose this
+	//   = (abc)'+(def)'+(ghij)'	, delay = nand4 +   or3 = 0.296 + 0.430 = 0.726
+	input A,B,C,D,E;
+	input F,G,H,I,J;
+	output Z;
+	wire and21, and22, and31, and32;
+	AN3(and31,A,B,C);
+	AN3(and32,D,E,F);
+	AN2(and21,G,H);
+	AN2(and22,I,J);
+	ND4(Z,and31,and32,and21,and22);
+endmodule
+
+module AN10(Z,A,B,C,D,E,F,G,H,I,J);
+	// and10
+	// F = (abc)(def)(ghij)				, delay =   and4 + and3 = 0.371 + 0.275 = 0.646
+	//   = [(abc)'+(def)'+(gh)'+(ij)']'	, delay =  nand3 + nor4 = 0.226 + 0.345 = 0.571 <-- choose this
+	//   = [(abc)'+(def)'+(ghij)']'		, delay =  nand4 + nor3 = 0.296 + 0.345 = 0.641
+	input A,B,C,D,E;
+	input F,G,H,I,J;
+	output Z;
+	wire and21, and22, and31, and32;
+	AN3(and31,A,B,C);
+	AN3(and32,D,E,F);
+	AN2(and21,G,H);
+	AN2(and22,I,J);
+	ND4(Z,and31,and32,and21,and22);
 endmodule
