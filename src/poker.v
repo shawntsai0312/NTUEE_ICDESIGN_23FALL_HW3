@@ -5,34 +5,52 @@ module poker(type, i0, i1, i2, i3, i4);
 	input  [5:0] i0, i1, i2, i3, i4;
 	output [3:0] type;
 //---------------------------------------------------
+
+	// flush
 	wire flush;
 	flushChecker(flush, i0[5:4], i1[5:4], i2[5:4], i3[5:4], i4[5:4]);
 
+	// four of a kind
 	wire fourOfAKind, notFour;
 	fourOfAKindChecker(fourOfAKind, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 	IV(notFour, fourOfAKind);
 
+	// full house
 	wire fullHouse, notFull;
 	fullHouseChecker(fullHouse, notFull, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
+	// three of a kind
 	wire threeOfAKind, threeOfAKinkPossible, notThree, notThreePossible;
 	threeOfAKindPossibleChecker(threeOfAKinkPossible, notThreePossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 	AN2(threeOfAKind, threeOfAKinkPossible, notFull);
 	ND2(notThree, threeOfAKinkPossible, notFull);
 
+	// two pairs
 	wire twoPairs, twoPairsPossible, notTwo, notTwoPossible;
 	twoPairsPossibleChecker(twoPairsPossible, notTwoPossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 	AN3(twoPairs, twoPairsPossible, notFour, notFull);				// 0.275 + 0.402 = 0.677
 	ND3(  notTwo, twoPairsPossible, notFour, notFull);				// 0.226 + 0.402 = 0.628
 
+	// one pair
 	wire onePair, onePairPossible, notOne, notOnePossible;
 	onePairPossibleChecker(onePairPossible, notOnePossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 	AN3(onePair, onePairPossible, notThreePossible, notTwoPossible);
 	ND3( notOne, onePairPossible, notThreePossible, notTwoPossible);
 
+	// straight
+	// 10,11,12,13,1 to be done
+	wire straightPossible, notStraightPossible, straight;
+	straightPossibleChecker(straightPossible, notStraightPossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
+	AN2(straight, straightPossible, notOnePossible);
+
+	// output tester
 	reg [3:0] typeReg;
 	always @(*) begin
-		if(flush) 				typeReg = 4'b0101;
+		if(flush) begin
+			if(straight)		typeReg = 4'b1000;
+			else 				typeReg = 4'b0101;
+		end
+		else if(straight)		typeReg = 4'b0100;
 		else if(fourOfAKind)	typeReg = 4'b0111;
 		else if(fullHouse)		typeReg = 4'b0110;
 		else if(threeOfAKind)	typeReg = 4'b0011;
@@ -40,9 +58,6 @@ module poker(type, i0, i1, i2, i3, i4);
 		else if(onePair)		typeReg = 4'b0001;
 		else					typeReg = 4'b0000;
 	end
-	
-	// wire straight;
-	
 endmodule
 
 module flushChecker(out, in0, in1, in2, in3, in4);
@@ -56,104 +71,178 @@ module flushChecker(out, in0, in1, in2, in3, in4);
 	AN2(out, s5bc0, s5bc1);
 endmodule
 
-module straightChecker(out, in0, in1, in2, in3, in4);
+module straightPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
-	output out;
+	output out, notOut;
+
+	// since all 5 cards are not the same rank
+	// go through twoNeighborChecker
+	// 3 results is true and 2 results is false
+	// if 4/5 results is true, just return true, since they are all don't care terms
+	// out = abc + abd + abe + ... + cde , total 10 cases or
+	// use nand3 and nand10 to accelerate
+	wire case0, case1, case2, case3, case4;
+	twoNeighborChecker(case0, in0, in1, in2, in3, in4);
+	twoNeighborChecker(case1, in1, in0, in2, in3, in4);
+	twoNeighborChecker(case2, in2, in0, in1, in3, in4);
+	twoNeighborChecker(case3, in3, in0, in1, in2, in4);
+	twoNeighborChecker(case4, in4, in0, in1, in2, in3);
+
+	wire nd012, nd013, nd014, nd023, nd024, nd034, nd123, nd124, nd134, nd234;
+	ND3(nd012, case0, case1, case2);
+	ND3(nd013, case0, case1, case3);
+	ND3(nd014, case0, case1, case4);
+	ND3(nd023, case0, case2, case3);
+	ND3(nd024, case0, case2, case4);
+	ND3(nd034, case0, case3, case4);
+	ND3(nd123, case1, case2, case3);
+	ND3(nd124, case1, case2, case4);
+	ND3(nd134, case1, case3, case4);
+	ND3(nd234, case2, case3, case4);
+	ND10(out, nd012, nd013, nd014, nd023, nd024, nd034, nd123, nd124, nd134, nd234);
+	AN10(notOut, nd012, nd013, nd014, nd023, nd024, nd034, nd123, nd124, nd134, nd234);
 endmodule
 
-module neighborChecker(out, in0, in1);
+module neighborChecker(out, notOut, in0, in1);
 	input [3:0] in0, in1;
+	output out, notOut;
+
+	// case1 : xxx0 , xxx1
+	// case2 : xx01 , xx10
+	// case3 : x011 , x100
+	// case4 : 0111 , 1000
+	// 4 cases or
+	wire case1, case2, case3, case4;
+	wire notC1, notC2, notC3, notC4;
+	theLeast1BitChangeChecker(case1, notC1, in0, in1);
+	theLeast2BitChangeChecker(case2, notC2, in0, in1);
+	theLeast3BitChangeChecker(case3, notC3, in0, in1);
+	theLeast4BitChangeChecker(case4, notC4, in0, in1);
+	
+	ND4(out, notC1, notC2, notC3, notC4);
+	NR4(notOut, case1, case2, case3, case4);
+endmodule
+
+module twoNeighborChecker(out, main, in1, in2, in3, in4);
+	input [3:0] main, in1, in2, in3, in4;
 	output out;
 
-	// the least 1 bit change
-	wire  theLeast1BitChange, notTheLeast1BitChange;
-	theLeast1BitChangeChecker(theLeast1BitChange, notTheLeast1BitChange, in0, in1);
-	// the least 2 bits change
-	wire  theLeast2BitChange, notTheLeast2BitChange;
-	theLeast2BitChangeChecker(theLeast2BitChange, notTheLeast2BitChange, in0, in1);
-	// the least 3 bits change
-	wire  theLeast3BitChange, notTheLeast3BitChange;
-	theLeast3BitChangeChecker(theLeast3BitChange, notTheLeast3BitChange, in0, in1);
-	// the least 4 bits change
-	wire  theLeast4BitChange, notTheLeast4BitChange;
-	theLeast4BitChangeChecker(theLeast4BitChange, notTheLeast4BitChange, in0, in1);
+	// the input might be the same rank but we don't have to worry about it!
+	// we will use notOnePossible above to filter the final result!
+	wire isNeighbor1, notNeighbor1, isNeighbor2, notNeighbor2;
+	wire isNeighbor3, notNeighbor3, isNeighbor4, notNeighbor4;
 
-	// out = the above 4 cases result or4		,delay = 0.815 + 0.472 = 1.287
-	//     = the above 4 cases result' nand4 	,delay = 0.766 + 0.296 = 1.062  <-- choose this
+	neighborChecker(isNeighbor1, notNeighbor1, main, in1);
+	neighborChecker(isNeighbor2, notNeighbor2, main, in2);
+	neighborChecker(isNeighbor3, notNeighbor3, main, in3);
+	neighborChecker(isNeighbor4, notNeighbor4, main, in4);
 
-	ND4(out, notTheLeast1BitChange, notTheLeast2BitChange, notTheLeast3BitChange, notTheLeast4BitChange);
+	// out = is1&is2 + is1&is3 + ... + is3&is4	, delay =  and2 +   or6 = 0.225 + 0.525
+	//	   = [()' & ()' & ... & ()']'			, delay = nand2 + nand6 = 0.176 + 0.453  <-- choose this
+	wire case12, case13, case14, case23, case24, case34;
+	ND2(case12, isNeighbor1, isNeighbor2);
+	ND2(case13, isNeighbor1, isNeighbor3);
+	ND2(case14, isNeighbor1, isNeighbor4);
+	ND2(case23, isNeighbor2, isNeighbor3);
+	ND2(case24, isNeighbor2, isNeighbor4);
+	ND2(case34, isNeighbor3, isNeighbor4);
+	ND6(out, case12, case13, case14, case23, case24, case34);
 endmodule
 
 module theLeast4BitChangeChecker(out, notOut, in0, in1);
 	input [3:0] in0, in1;
 	output out, notOut;
 
-	//	3		2		1		0
-	// xor  &  xor  &  xor  &  xor 		, delay =  xor + and4 = 0.343 + 0.371 = 0.714  <-- choose this
-	//(xnor +  xnor + xnor  +  xnor)'	, delay = xnor + nor4 = 0.470 + 0.345 = 0.815
+	// 0111,1000
+	// (in0[3:0] == 0111 & in1[3:0] == 1000) + (inverse)
+	// in0 = a, in1 = b
+	// out = a3'a2a1a0b3b2'b1'b0' + a3a2'a1'a0'b3'b2b1b0
+	//	   = [(a3'a2a1a0b3b2'b1'b0')'&(a3a2'a1'a0'b3'b2b1b0)']'
+	wire not00, not01, not02, not03, not10, not11, not12, not13;
+	IV(not00, in0[0]);
+	IV(not01, in0[1]);
+	IV(not02, in0[2]);
+	IV(not03, in0[3]);
+	IV(not10, in1[0]);
+	IV(not11, in1[1]);
+	IV(not12, in1[2]);
+	IV(not13, in1[3]);
 
-	// notOut delay = xor + nand4 = 0.343 + 0.296 = 0.639
-	wire xor3, xor2, xor1, xor0;
-	EO(xor3, in0[3], in1[3]);
-	EO(xor2, in0[2], in1[2]);
-	EO(xor1, in0[1], in1[1]);
-	EO(xor0, in0[0], in1[0]);
-	AN4(   out, xor3, xor2, xor1, xor0);
-	ND4(notOut, xor3, xor2, xor1, xor0);
+	wire nand81, nand82;
+	ND8(nand81, not03, in0[2], in0[1], in0[0], in1[3], not12, not11, not10);
+	ND8(nand82, in0[3], not02, not01, not00, not13, in1[2], in1[1], in1[0]);
+	ND2(out, nand81, nand82);
+	AN2(notOut, nand81, nand82);
 endmodule
 
 module theLeast3BitChangeChecker(out, notOut, in0, in1);
 	input [3:0] in0, in1;
 	output out, notOut;
 
-	//	3		2		1		0
-	// xnor &  xor  &  xor  &  xor 		, delay = xnor + and4 = 0.470 + 0.371 = 0.841
-	//( xor + xnor  + xnor  + xnor)'	, delay = xnor + nor4 = 0.470 + 0.345 = 0.815  <-- choose this
+	// x011,x100
+	// (in0[2:0] == 011 & in1[2:0] == 100) + (inverse)
+	// in0 = a, in1 = b
+	// check = a2'a1a0b2b1'b0' + a2a1'a0'b2'b1b0
+	//		 = [(a2'a1a0b2b1'b0')'&(a2a1'a0'b2'b1b0)']'
+	wire not00, not01, not02, not10, not11, not12;
+	IV(not00, in0[0]);
+	IV(not01, in0[1]);
+	IV(not02, in0[2]);
+	IV(not10, in1[0]);
+	IV(not11, in1[1]);
+	IV(not12, in1[2]);
 
-	wire xor3, xnor2, xnor1, xnor0;
+	wire and1, nand1, nand61, nand62;
+	ND6(nand61, not02, in0[1], in0[0], in1[2], not11, not10);
+	ND6(nand62, in0[2], not01, not00, not12, in1[1], in1[0]);
+	AN2(and1, nand62, nand62);
+	ND2(nand1, nand61, nand62);
+	
+	wire xor3, xnor3;
 	EO(xor3, in0[3], in1[3]);
-	XNOR2(xnor2, in0[2], in1[2]);
-	XNOR2(xnor1, in0[1], in1[1]);
-	XNOR2(xnor0, in0[0], in1[0]);
-	NR4(out, xor3, xnor2, xnor1, xnor0);
-
-	// notOut delay = xnor + nand4 = 0.470 + 0.296 = 0.766
-	wire xnor3, xor2, xor1, xor0;
 	XNOR2(xnor3, in0[3], in1[3]);
-	EO(xor2, in0[2], in1[2]);
-	EO(xor1, in0[1], in1[1]);
-	EO(xor0, in0[0], in1[0]);
-	ND4(notOut, xnor3, xor2, xor1, xor0);
+
+	NR2(out, and1, xor3);
+	ND2(notOut, nand1, xnor3);
 endmodule
 
 module theLeast2BitChangeChecker(out, notOut, in0, in1);
 	input [3:0] in0, in1;
 	output out, notOut;
 
-	//	3		2		1		0
-	// xnor & xnor  &  xor  &  xor 		, delay = xnor + and4 = 0.470 + 0.371 = 0.841
-	//( xor +  xor  + xnor  + xnor)'	, delay = xnor + nor4 = 0.470 + 0.345 = 0.815  <-- choose this
+	// xx01,xx10
+	// (in0[1:0] == 01 & in1[1:0] == 10) + (inverse)
+	// in0 = a, in1 = b
+	// check10 = a1'a0b1b0' + a1a0'b1'b0
+	//		   = [(a1'a0b1b0')'&(a1a0'b1'b0)']'
+	wire not00, not01, not10, not11;
+	IV(not00, in0[0]);
+	IV(not01, in0[1]);
+	IV(not10, in1[0]);
+	IV(not11, in1[1]);
 
-	wire xor3, xor2, xnor1, xnor0;
+	wire check10, nand41, nand42;
+	ND4(nand41, not01, in0[0], in1[1], not10);
+	ND4(nand42, in0[1], not00, not11, in1[0]);
+	ND2(check10, nand41, nand42);
+	
+	//	3		2	
+	// xnor & xnor  	, delay = xnor + and2 = 0.470 + 0.371 = 0.841
+	//(xor +  xor)'		, delay =  xor + nor2 = 0.343 + 0.227 = 0.570  <-- choose this
+	wire same32;
 	EO(xor3, in0[3], in1[3]);
 	EO(xor2, in0[2], in1[2]);
-	XNOR2(xnor1, in0[1], in1[1]);
-	XNOR2(xnor0, in0[0], in1[0]);
-	NR4(out, xor3, xor2, xnor1, xnor0);
+	NR2(same32, xor3, xor2);
 
-	// notOut delay = xnor + nand4 = 0.470 + 0.296 = 0.766
-	wire xnor3, xnor2, xor1, xor0;
-	XNOR2(xnor3, in0[3], in1[3]);
-	XNOR2(xnor2, in0[2], in1[2]);
-	EO(xor1, in0[1], in1[1]);
-	EO(xor0, in0[0], in1[0]);
-	ND4(notOut, xnor3, xnor2, xor1, xor0);
+	AN2(out, check10, same32);
+	ND2(notOut, check10, same32);
 endmodule
 
 module theLeast1BitChangeChecker(out, notOut, in0, in1);
 	input [3:0] in0, in1;
 	output out, notOut;
 
+	// xxx0,xxx1
 	//	3		2		1		0
 	// xnor & xnor  & xnor  &  xor 		, delay = xnor + and4 = 0.470 + 0.371 = 0.841
 	//( xor +  xor  +  xor  + xnor)'	, delay = xnor + nor4 = 0.470 + 0.345 = 0.815  <-- choose this
@@ -578,6 +667,50 @@ module NR6(Z,A,B,C,D,E,F);
 	NR3(nor31, A, B, C);
 	NR3(nor32, D, E, F);
 	AN2(Z, nor31, nor32);
+endmodule
+
+module ND6(Z,A,B,C,D,E,F);
+	// nand 6
+	// f = (abcdef)'
+	//   = (abc)'+(def)'			, delay = nand3 + or2 = 0.226 + 0.300 = 0.526  <-- choose this
+	//   = (ab)'+(cd)'+(ef)'		, delay = nand2 + or3 = 0.176 + 0.430 = 0.606
+	// delay = 0.574
+	input A, B, C, D, E, F;
+	output Z;
+	
+	wire nand31, nand32;
+	ND3(nand31, A, B, C);
+	ND3(nand32, D, E, F);
+	OR2(Z, nand31, nand32);
+endmodule
+
+module ND8(Z,A,B,C,D,E,F,G,H);
+	// nand8
+	// F = [(abc)(def)(gh)]'		, delay =  and3 + nand3 = 0.275 + 0.226 = 0.501 <-- choose this
+	//   = [(abcd)(efgh)]'			, delay =  and4 + nand2 = 0.371 + 0.176 = 0.547
+	//   = [(ab)(cd)(ef)(gh)]'		, delay =  and2 + nand4 = 0.225 + 0.296 = 0.521
+	input A,B,C,D;
+	input E,F,G,H;
+	output Z;
+	wire and2, and31, and32;
+	AN3(and31,A,B,C);
+	AN3(and32,D,E,F);
+	AN2(and2,G,H);
+	ND3(Z,and31,and32,and2);
+endmodule
+
+module AN8(Z,A,B,C,D,E,F,G,H);
+	// and8
+	// F = (abc)(def)(gh)				, delay =   and3 + and3 = 0.275 + 0.275 = 0.550
+	//   = [(abc)'+(def)'+(gh)']'		, delay =  nand3 + nor3 = 0.226 + 0.345 = 0.571
+	//   = [(abcd)'+(efgh)']'			, delay =  nand4 + nor2 = 0.296 + 0.227 = 0.523  <-- choose this
+	input A,B,C,D;
+	input E,F,G,H;
+	output Z;
+	wire nand41, nand42;
+	ND4(nand41,A,B,C,D);
+	ND4(nand42,E,F,G,H);
+	NR2(Z,nand41,nand42);
 endmodule
 
 module OR10(Z,A,B,C,D,E,F,G,H,I,J);
