@@ -32,8 +32,10 @@ cd src
 * flush checker
   * the first two bits of all five cards should be the same
 * straight checker
-  * normal case : find min and max, the difference should be 4
-  * 10,11,12,13,1 : directly determine it
+  * There are total 10 cases, each case has 5!(=120) possibilities
+  * neighbor checker, rank difference = 1
+    * 5 cards, 3 have 2 neighbors, 2 have 1 neighbor, with no ranks are the same (not onePairPossible)
+  * 10,11,12,13,1 detecter
 * identical 4 ranks checker
   * input four cards and determine if they are the same rank, parallel*5
   * if one of them is true, then it's 4 of a kind

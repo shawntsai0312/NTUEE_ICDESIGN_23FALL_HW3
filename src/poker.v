@@ -61,6 +61,119 @@ module straightChecker(out, in0, in1, in2, in3, in4);
 	output out;
 endmodule
 
+module neighborChecker(out, in0, in1);
+	input [3:0] in0, in1;
+	output out;
+
+	// the least 1 bit change
+	wire  theLeast1BitChange, notTheLeast1BitChange;
+	theLeast1BitChangeChecker(theLeast1BitChange, notTheLeast1BitChange, in0, in1);
+	// the least 2 bits change
+	wire  theLeast2BitChange, notTheLeast2BitChange;
+	theLeast2BitChangeChecker(theLeast2BitChange, notTheLeast2BitChange, in0, in1);
+	// the least 3 bits change
+	wire  theLeast3BitChange, notTheLeast3BitChange;
+	theLeast3BitChangeChecker(theLeast3BitChange, notTheLeast3BitChange, in0, in1);
+	// the least 4 bits change
+	wire  theLeast4BitChange, notTheLeast4BitChange;
+	theLeast4BitChangeChecker(theLeast4BitChange, notTheLeast4BitChange, in0, in1);
+
+	// out = the above 4 cases result or4		,delay = 0.815 + 0.472 = 1.287
+	//     = the above 4 cases result' nand4 	,delay = 0.766 + 0.296 = 1.062  <-- choose this
+
+	ND4(out, notTheLeast1BitChange, notTheLeast2BitChange, notTheLeast3BitChange, notTheLeast4BitChange);
+endmodule
+
+module theLeast4BitChangeChecker(out, notOut, in0, in1);
+	input [3:0] in0, in1;
+	output out, notOut;
+
+	//	3		2		1		0
+	// xor  &  xor  &  xor  &  xor 		, delay =  xor + and4 = 0.343 + 0.371 = 0.714  <-- choose this
+	//(xnor +  xnor + xnor  +  xnor)'	, delay = xnor + nor4 = 0.470 + 0.345 = 0.815
+
+	// notOut delay = xor + nand4 = 0.343 + 0.296 = 0.639
+	wire xor3, xor2, xor1, xor0;
+	EO(xor3, in0[3], in1[3]);
+	EO(xor2, in0[2], in1[2]);
+	EO(xor1, in0[1], in1[1]);
+	EO(xor0, in0[0], in1[0]);
+	AN4(   out, xor3, xor2, xor1, xor0);
+	ND4(notOut, xor3, xor2, xor1, xor0);
+endmodule
+
+module theLeast3BitChangeChecker(out, notOut, in0, in1);
+	input [3:0] in0, in1;
+	output out, notOut;
+
+	//	3		2		1		0
+	// xnor &  xor  &  xor  &  xor 		, delay = xnor + and4 = 0.470 + 0.371 = 0.841
+	//( xor + xnor  + xnor  + xnor)'	, delay = xnor + nor4 = 0.470 + 0.345 = 0.815  <-- choose this
+
+	wire xor3, xnor2, xnor1, xnor0;
+	EO(xor3, in0[3], in1[3]);
+	XNOR2(xnor2, in0[2], in1[2]);
+	XNOR2(xnor1, in0[1], in1[1]);
+	XNOR2(xnor0, in0[0], in1[0]);
+	NR4(out, xor3, xnor2, xnor1, xnor0);
+
+	// notOut delay = xnor + nand4 = 0.470 + 0.296 = 0.766
+	wire xnor3, xor2, xor1, xor0;
+	XNOR2(xnor3, in0[3], in1[3]);
+	EO(xor2, in0[2], in1[2]);
+	EO(xor1, in0[1], in1[1]);
+	EO(xor0, in0[0], in1[0]);
+	ND4(notOut, xnor3, xor2, xor1, xor0);
+endmodule
+
+module theLeast2BitChangeChecker(out, notOut, in0, in1);
+	input [3:0] in0, in1;
+	output out, notOut;
+
+	//	3		2		1		0
+	// xnor & xnor  &  xor  &  xor 		, delay = xnor + and4 = 0.470 + 0.371 = 0.841
+	//( xor +  xor  + xnor  + xnor)'	, delay = xnor + nor4 = 0.470 + 0.345 = 0.815  <-- choose this
+
+	wire xor3, xor2, xnor1, xnor0;
+	EO(xor3, in0[3], in1[3]);
+	EO(xor2, in0[2], in1[2]);
+	XNOR2(xnor1, in0[1], in1[1]);
+	XNOR2(xnor0, in0[0], in1[0]);
+	NR4(out, xor3, xor2, xnor1, xnor0);
+
+	// notOut delay = xnor + nand4 = 0.470 + 0.296 = 0.766
+	wire xnor3, xnor2, xor1, xor0;
+	XNOR2(xnor3, in0[3], in1[3]);
+	XNOR2(xnor2, in0[2], in1[2]);
+	EO(xor1, in0[1], in1[1]);
+	EO(xor0, in0[0], in1[0]);
+	ND4(notOut, xnor3, xnor2, xor1, xor0);
+endmodule
+
+module theLeast1BitChangeChecker(out, notOut, in0, in1);
+	input [3:0] in0, in1;
+	output out, notOut;
+
+	//	3		2		1		0
+	// xnor & xnor  & xnor  &  xor 		, delay = xnor + and4 = 0.470 + 0.371 = 0.841
+	//( xor +  xor  +  xor  + xnor)'	, delay = xnor + nor4 = 0.470 + 0.345 = 0.815  <-- choose this
+
+	wire xor3, xor2, xor1, xnor0;
+	EO(xor3, in0[3], in1[3]);
+	EO(xor2, in0[2], in1[2]);
+	EO(xor1, in0[1], in1[1]);
+	XNOR2(xnor0, in0[0], in1[0]);
+	NR4(out, xor3, xor2, xor1, xnor0);
+
+	// notOut delay = xnor + nand4 = 0.470 + 0.296 = 0.766
+	wire xnor3, xnor2, xnor1, xor0;
+	XNOR2(xnor3, in0[3], in1[3]);
+	XNOR2(xnor2, in0[2], in1[2]);
+	XNOR2(xnor1, in0[1], in1[1]);
+	EO(xor0, in0[0], in1[0]);
+	ND4(notOut, xnor3, xnor2, xnor1, xor0);
+endmodule
+
 module fourOfAKindChecker(out, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
 	output out;
@@ -341,16 +454,8 @@ endmodule
 module same2BitChecker(out, in0, in1);
 	input in0, in1;
 	output out;
-	// F = ab + (a+b)'
-	// although we can use xnor, but the delay is too high !!!
-	// this module can lower the delay from 1.1 to 0.527
-	wire and2;
-	AN2(and2, in0, in1);
 
-	wire nor2;
-	NR2(nor2, in0, in1);
-
-	OR2(out, and2, nor2);
+	XNOR2(out, in0, in1);
 endmodule
 
 module identical4RanksChecker(out, in0, in1, in2, in3);
@@ -390,6 +495,17 @@ module identical2RanksChecker(out, in0, in1);
 	same2BitChecker(s2bc3, in0[3], in1[3]);
 
 	AN4(out, s2bc0, s2bc1, s2bc2, s2bc3);
+endmodule
+
+module XNOR2(Z, A, B);
+	input A, B;
+	output Z;
+	// F = ab + (a+b)'	, delay = nor2 + or2 = 0.227 + 0.300 = 0.527
+	//   = (a'b+ab')'   , delay = xor2 + inv = 0.343 + 0.127 = 0.470 <-- choose this
+	// although we can use xnor, but the delay is too high !!!
+	wire xor2;
+	EO(xor2, A, B);
+	IV(Z, xor2);
 endmodule
 
 module OR5(Z,A,B,C,D,E);
