@@ -8,8 +8,6 @@ module poker(type, i0, i1, i2, i3, i4);
 	wire flush;
 	flushChecker(flush, i0[5:4], i1[5:4], i2[5:4], i3[5:4], i4[5:4]);
 
-	// wire straight;
-
 	wire fourOfAKind, notFour;
 	fourOfAKindChecker(fourOfAKind, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 	IV(notFour, fourOfAKind);
@@ -18,21 +16,21 @@ module poker(type, i0, i1, i2, i3, i4);
 	fullHouseChecker(fullHouse, notFull, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
 	wire threeOfAKind, threeOfAKinkPossible, notThree, notThreePossible;
-	threeOfAKindPossibleChecker(threeOfAKinkPossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-	IV(notThreePossible, threeOfAKinkPossible);
+	threeOfAKindPossibleChecker(threeOfAKinkPossible, notThreePossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 	AN2(threeOfAKind, threeOfAKinkPossible, notFull);
-	IV(notThree, threeOfAKind);
+	ND2(notThree, threeOfAKinkPossible, notFull);
 
-	wire twoPairs, twoPairsPossible, notTwos, notTwoPossible; // delay is too high
-	twoPairsPossibleChecker(twoPairsPossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-	IV(notTwoPossible, twoPairsPossible);
-	AN3(twoPairs, twoPairsPossible, notFour, notFull);
-	IV(notTwo, twoPairs);
+	wire twoPairs, twoPairsPossible, notTwo, notTwoPossible;
+	twoPairsPossibleChecker(twoPairsPossible, notTwoPossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
+	AN3(twoPairs, twoPairsPossible, notFour, notFull);				// 0.275 + 0.402 = 0.677
+	ND3(  notTwo, twoPairsPossible, notFour, notFull);				// 0.226 + 0.402 = 0.628
 
 	wire onePair, onePairPossible, notOne, notOnePossible;
-	onePairPossibleChecker(onePairPossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
+	onePairPossibleChecker(onePairPossible, notOnePossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 	AN3(onePair, onePairPossible, notThreePossible, notTwoPossible);
-	IV(notOne, onePair);
+	ND3( notOne, onePairPossible, notThreePossible, notTwoPossible);
+
+	// wire straight;
 	
 
 endmodule
@@ -139,9 +137,9 @@ module fullHouseChecker(out, notOut, in0, in1, in2, in3, in4);
 	AN10(notOut, case0, case1, case2, case3, case4, case5, case6, case7, case8, case9);
 endmodule
 
-module threeOfAKindPossibleChecker(out, in0, in1, in2, in3, in4);
+module threeOfAKindPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
-	output out;
+	output out, notOut;
 
 	// case0 012, 34
 	wire i3rc012;
@@ -183,12 +181,13 @@ module threeOfAKindPossibleChecker(out, in0, in1, in2, in3, in4);
 	wire i3rc234;
 	identical3RanksChecker(i3rc234, in2, in3, in4);
 
-	OR10(out, i3rc012, i3rc013, i3rc014, i3rc023, i3rc024, i3rc034, i3rc123, i3rc124, i3rc134, i3rc234);
+	OR10(   out, i3rc012, i3rc013, i3rc014, i3rc023, i3rc024, i3rc034, i3rc123, i3rc124, i3rc134, i3rc234);
+	NR10(notOut, i3rc012, i3rc013, i3rc014, i3rc023, i3rc024, i3rc034, i3rc123, i3rc124, i3rc134, i3rc234);
 endmodule
 
-module twoPairsPossibleChecker(out, in0, in1, in2, in3, in4);
+module twoPairsPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
-	output out;
+	output out, notOut;
 
 	wire sub0123, sub0124, sub0134, sub0234, sub1234;
 	twoPairsSubPossibleChecker(sub0123, in0, in1, in2, in3);
@@ -197,7 +196,8 @@ module twoPairsPossibleChecker(out, in0, in1, in2, in3, in4);
 	twoPairsSubPossibleChecker(sub0234, in0, in2, in3, in4);
 	twoPairsSubPossibleChecker(sub1234, in1, in2, in3, in4);
 
-	OR5(out, sub0123, sub0124, sub0134, sub0234, sub1234);
+	OR5(   out, sub0123, sub0124, sub0134, sub0234, sub1234);
+	NR5(notOut, sub0123, sub0124, sub0134, sub0234, sub1234);
 endmodule
 
 module twoPairsSubPossibleChecker(out, in0, in1, in2, in3);
@@ -215,8 +215,8 @@ module twoPairsSubPossibleChecker(out, in0, in1, in2, in3);
 	// wire same0123, notSame0123;
 	// identical4RanksChecker(same0123, in0, in1, in2, in3);
 
-	// out = s01&s23 + s02&s13 + s03&s12
-	//     = ((s01&s23)' & (s02&s13)' & (s03&s12)')'
+	// out  = s01&s23 + s02&s13 + s03&s12
+	//      = ((s01&s23)' & (s02&s13)' & (s03&s12)')'	, delay = nand2 + nand3 = 0.176 + 0.226 = 0.402
 	wire case0, case1, case2;
 
 	// case0 : check if rank0 = rank1 = x and rank2 = rank3 = y but x != y
@@ -231,9 +231,9 @@ module twoPairsSubPossibleChecker(out, in0, in1, in2, in3);
 	ND3(out, case0, case1, case2);
 endmodule
 
-module onePairPossibleChecker(out, in0, in1, in2, in3, in4);
+module onePairPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
-	output out;
+	output out, notOut;
 
 	// rank0 = rank1
 	wire i2rc01;
@@ -276,6 +276,7 @@ module onePairPossibleChecker(out, in0, in1, in2, in3, in4);
 	identical2RanksChecker(i2rc34, in3, in4);
 
 	OR10(out, i2rc01, i2rc02, i2rc03, i2rc04, i2rc12, i2rc13, i2rc14, i2rc23, i2rc24, i2rc34);
+	NR10(out, i2rc01, i2rc02, i2rc03, i2rc04, i2rc12, i2rc13, i2rc14, i2rc23, i2rc24, i2rc34);
 endmodule
 
 module same5BitChecker(out, in0, in1, in2, in3, in4);
@@ -384,22 +385,38 @@ endmodule
 module OR5(Z,A,B,C,D,E);
 	// or 5
 	// f = a+b+c+d+e
-	//   = ((a+b+c)'(d+e)')'
-	// delay = 0.525
+	//   = ((a+b+c)'(d+e)')'	, delay = nor3 + nand2 = 0.345 + 0.176 = 0.521
+	//   = ((a+b)'(c+d)'e')'	, delay = nor2 + nand3 = 0.227 + 0.226 = 0.453
 	input A, B, C, D, E;
 	output Z;
 	
-	wire nor3, nor2;
-	NR3(nor3, A, B, C);
-	NR2(nor2, D, E);
-	ND2(Z, nor3, nor2);
+	wire nor21, nor22, notE;
+	NR2(nor21, A, B);
+	NR2(nor22, D, E);
+	IV(notE, E);
+	ND3(Z, nor21, nor22, notE);
+endmodule
+
+module NR5(Z,A,B,C,D,E);
+	// nor 5
+	// f = (a+b+c+d+e)'
+	//   = (a+b+c)'(d+e)'	, delay = nor3 + and2 = 0.345 + 0.225 = 0.570
+	//	 = (a+b)'(c+d)'e'	, delay = nor2 + and3 = 0.227 + 0.275 = 0.502
+	input A, B, C, D, E;
+	output Z;
+	
+	wire nor21, nor22, notE;
+	NR2(nor21, A, B);
+	NR2(nor22, D, E);
+	IV(notE, E);
+	AN3(Z, nor21, nor22, notE);
 endmodule
 
 module AN5(Z,A,B,C,D,E);
 	// and 5
 	// f = abcde
-	//   = ((abc)'+(de)')'
-	// delay = 0.453
+	//   = ((abc)'+(de)')'	 , delay = nand3 + nor2 = 0.226 + 0.227 = 0.453
+	//	 = ((ab)'+(cd)'+e')' , delay = nand2 + nor3 = 0.176 + 0.345 = 0.521
 	input A, B, C, D, E;
 	output Z;
 	
@@ -440,17 +457,32 @@ endmodule
 module OR10(Z,A,B,C,D,E,F,G,H,I,J);
 	// or10
 	// F = (a+b+c)+(d+e+f)+(g+h+i+j)
-	//   = [(a+b+c+0)' (d+e+f+0)'(g+h+i+j)' ]'
+	//   = [(a+b+c+0)'(d+e+f+0)'(g+h+i+j)']'
 	// delay = nor4 + nand3 = 0.345 + 0.226 = 0.571
 	// nor4 is faster than nor3
 	input A,B,C,D,E;
 	input F,G,H,I,J;
 	output Z;
 	wire nor31, nor32, nor4;
-	NR4(nor31,A,B,C,0);
-	NR4(nor32,D,E,F,0);
+	NR4(nor31,A,B,C,1'b0);
+	NR4(nor32,D,E,F,1'b0);
 	NR4(nor4,G,H,I,J);
 	ND3(Z,nor31,nor32,nor4);
+endmodule
+
+module NR10(Z,A,B,C,D,E,F,G,H,I,J);
+	// nor10
+	// F = [(a+b+c)+(d+e+f)+(g+h+i+j)]'		, delay =  or4 + nor3 = 0.472 + 0.345 = 0.818
+	//   = (a+b+c+0)'(d+e+f+0)'(g+h+i+j)'	, delay = nor4 + and3 = 0.345 + 0.275 = 0.620 <-- choose this
+	//	 = (a+b+c+0)'(d+e+f+0)'(g+h)'(i+j)'	, delay = nor3 + and4 = 0.345 + 0.371 = 0.716
+	input A,B,C,D,E;
+	input F,G,H,I,J;
+	output Z;
+	wire nor31, nor32, nor4;
+	NR4(nor31,A,B,C,1'b0);
+	NR4(nor32,D,E,F,1'b0);
+	NR4(nor4,G,H,I,J);
+	AN3(Z,nor31,nor32,nor4);
 endmodule
 
 module ND10(Z,A,B,C,D,E,F,G,H,I,J);
@@ -477,10 +509,10 @@ module AN10(Z,A,B,C,D,E,F,G,H,I,J);
 	input A,B,C,D,E;
 	input F,G,H,I,J;
 	output Z;
-	wire and21, and22, and31, and32;
-	AN3(and31,A,B,C);
-	AN3(and32,D,E,F);
-	AN2(and21,G,H);
-	AN2(and22,I,J);
-	ND4(Z,and31,and32,and21,and22);
+	wire nand21, nand22, nand31, nand32;
+	ND3(nand31,A,B,C);
+	ND3(nand32,D,E,F);
+	ND2(nand21,G,H);
+	ND2(nand22,I,J);
+	NR4(Z,nand31,nand32,nand21,nand22);
 endmodule
