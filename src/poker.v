@@ -30,9 +30,19 @@ module poker(type, i0, i1, i2, i3, i4);
 	AN3(onePair, onePairPossible, notThreePossible, notTwoPossible);
 	ND3( notOne, onePairPossible, notThreePossible, notTwoPossible);
 
+	reg [3:0] typeReg;
+	always @(*) begin
+		if(flush) 				typeReg = 4'b0101;
+		else if(fourOfAKind)	typeReg = 4'b0111;
+		else if(fullHouse)		typeReg = 4'b0110;
+		else if(threeOfAKind)	typeReg = 4'b0011;
+		else if(twoPairs)		typeReg = 4'b0010;
+		else if(onePair)		typeReg = 4'b0001;
+		else					typeReg = 4'b0000;
+	end
+	
 	// wire straight;
 	
-
 endmodule
 
 module flushChecker(out, in0, in1, in2, in3, in4);
@@ -190,17 +200,17 @@ module twoPairsPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	output out, notOut;
 
 	wire sub0123, sub0124, sub0134, sub0234, sub1234;
-	twoPairsSubPossibleChecker(sub0123, in0, in1, in2, in3);
-	twoPairsSubPossibleChecker(sub0124, in0, in1, in2, in4);
-	twoPairsSubPossibleChecker(sub0134, in0, in1, in3, in4);
-	twoPairsSubPossibleChecker(sub0234, in0, in2, in3, in4);
-	twoPairsSubPossibleChecker(sub1234, in1, in2, in3, in4);
+	twoPairsPossibleSubChecker(sub0123, in0, in1, in2, in3);
+	twoPairsPossibleSubChecker(sub0124, in0, in1, in2, in4);
+	twoPairsPossibleSubChecker(sub0134, in0, in1, in3, in4);
+	twoPairsPossibleSubChecker(sub0234, in0, in2, in3, in4);
+	twoPairsPossibleSubChecker(sub1234, in1, in2, in3, in4);
 
 	OR5(   out, sub0123, sub0124, sub0134, sub0234, sub1234);
 	NR5(notOut, sub0123, sub0124, sub0134, sub0234, sub1234);
 endmodule
 
-module twoPairsSubPossibleChecker(out, in0, in1, in2, in3);
+module twoPairsPossibleSubChecker(out, in0, in1, in2, in3);
 	input [3:0] in0, in1, in2, in3;
 	output out;
 
@@ -275,8 +285,8 @@ module onePairPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	wire i2rc34;
 	identical2RanksChecker(i2rc34, in3, in4);
 
-	OR10(out, i2rc01, i2rc02, i2rc03, i2rc04, i2rc12, i2rc13, i2rc14, i2rc23, i2rc24, i2rc34);
-	NR10(out, i2rc01, i2rc02, i2rc03, i2rc04, i2rc12, i2rc13, i2rc14, i2rc23, i2rc24, i2rc34);
+	OR10(   out, i2rc01, i2rc02, i2rc03, i2rc04, i2rc12, i2rc13, i2rc14, i2rc23, i2rc24, i2rc34);
+	NR10(notOut, i2rc01, i2rc02, i2rc03, i2rc04, i2rc12, i2rc13, i2rc14, i2rc23, i2rc24, i2rc34);
 endmodule
 
 module same5BitChecker(out, in0, in1, in2, in3, in4);
@@ -392,7 +402,7 @@ module OR5(Z,A,B,C,D,E);
 	
 	wire nor21, nor22, notE;
 	NR2(nor21, A, B);
-	NR2(nor22, D, E);
+	NR2(nor22, C, D);
 	IV(notE, E);
 	ND3(Z, nor21, nor22, notE);
 endmodule
@@ -407,7 +417,7 @@ module NR5(Z,A,B,C,D,E);
 	
 	wire nor21, nor22, notE;
 	NR2(nor21, A, B);
-	NR2(nor22, D, E);
+	NR2(nor22, C, D);
 	IV(notE, E);
 	AN3(Z, nor21, nor22, notE);
 endmodule
