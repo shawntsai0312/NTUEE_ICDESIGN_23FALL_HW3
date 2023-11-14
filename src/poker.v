@@ -39,9 +39,8 @@ module poker(type, i0, i1, i2, i3, i4);
 
 	// straight
 	// 10,11,12,13,1 to be done
-	wire straightPossible, notStraightPossible, straight;
-	straightPossibleChecker(straightPossible, notStraightPossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-	AN2(straight, straightPossible, notOnePossible);
+	wire straight;
+	straightChecker(straight, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
 	// output tester
 	reg [3:0] typeReg;
@@ -71,13 +70,82 @@ module flushChecker(out, in0, in1, in2, in3, in4);
 	AN2(out, s5bc0, s5bc1);
 endmodule
 
-module straightPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
+module straightChecker(out, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
-	output out, notOut;
+	output out;
 
+	// case0 1,2,3,4,5
+	wire nCase0;
+	exist5GoalChecker(nCase0, 4'b0001, 4'b0010, 4'b0011, 4'b0100, 4'b0101, in0, in1, in2, in3, in4);
+
+	// case0 2,3,4,5,6
+	wire nCase1;
+	exist5GoalChecker(nCase6, 4'b0010, 4'b0011, 4'b0100, 4'b0101, 4'b0110, in0, in1, in2, in3, in4);
+
+	// case2 3,4,5,6,7
+	wire nCase2;
+	exist5GoalChecker(nCase2, 4'b0011, 4'b0100, 4'b0101, 4'b0110, 4'b0111, in0, in1, in2, in3, in4);
+
+	// case3 4,5,6,7,8
+	wire nCase3;
+	exist5GoalChecker(nCase3, 4'b0100, 4'b0101, 4'b0110, 4'b0111, 4'b1000, in0, in1, in2, in3, in4);
+
+	// case4 5,6,7,8,9
+	wire nCase4;
+	exist5GoalChecker(nCase4, 4'b0101, 4'b0110, 4'b0111, 4'b1000, 4'b1001, in0, in1, in2, in3, in4);
+
+	// case5 6,7,8,9,10
+	wire nCase5;
+	exist5GoalChecker(nCase5, 4'b0110, 4'b0111, 4'b1000, 4'b1001, 4'b1010, in0, in1, in2, in3, in4);
+
+	// case6 7,8,9,10,11
+	wire nCase6;
+	exist5GoalChecker(nCase6, 4'b0111, 4'b1000, 4'b1001, 4'b1010, 4'b1011, in0, in1, in2, in3, in4);
+
+	// case7 8,9,10,11,12
+	wire nCase7;
+	exist5GoalChecker(nCase7, 4'b1000, 4'b1001, 4'b1010, 4'b1011, 4'b1100, in0, in1, in2, in3, in4);
+
+	// case8 9,10,11,12,13
+	wire nCase8;
+	exist5GoalChecker(nCase8, 4'b1001, 4'b1010, 4'b1011, 4'b1100, 4'b1101, in0, in1, in2, in3, in4);
+
+	// case9 10,11,12,13,1
+	wire nCase9;
+	exist5GoalChecker(nCase9, 4'b1010, 4'b1011, 4'b1100, 4'b1101, 4'b0001, in0, in1, in2, in3, in4);
+
+	ND10(out, nCase0, nCase1, nCase2, nCase3, nCase4, nCase5, nCase6, nCase7, nCase8, nCase9);
 endmodule
 
+module exist5GoalChecker(notOut, goal0, goal1, goal2, goal3, goal4, in0, in1, in2, in3, in4);
+	input [3:0] goal0, goal1, goal2, goal3, goal4;
+	input [3:0] in0, in1, in2, in3, in4;
+	output notOut;
 
+	wire checkG0, checkG1, checkG2, checkG3, checkG4;
+	existGoalChecker(checkG0, goal0, in0, in1, in2, in3, in4);
+	existGoalChecker(checkG1, goal1, in0, in1, in2, in3, in4);
+	existGoalChecker(checkG2, goal2, in0, in1, in2, in3, in4);
+	existGoalChecker(checkG3, goal3, in0, in1, in2, in3, in4);
+	existGoalChecker(checkG4, goal4, in0, in1, in2, in3, in4);
+
+	ND5(notOut, checkG0, checkG1, checkG2, checkG3, checkG4);
+endmodule
+
+module existGoalChecker(out, goal, in0, in1, in2, in3, in4);
+	input [3:0] goal, in0, in1, in2, in3, in4;
+	output out;
+
+	wire check0, check1, check2, check3, check4;
+	wire nCheck0, nCheck1, nCheck2, nCheck3, nCheck4;
+	identical2RanksChecker(check0, nCheck0, goal, in0);
+	identical2RanksChecker(check1, nCheck1, goal, in1);
+	identical2RanksChecker(check2, nCheck2, goal, in2);
+	identical2RanksChecker(check3, nCheck3, goal, in3);
+	identical2RanksChecker(check4, nCheck4, goal, in4);
+
+	ND5(out, nCheck0, nCheck1, nCheck2, nCheck3, nCheck4);
+endmodule
 
 module fourOfAKindChecker(out, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
@@ -356,13 +424,6 @@ module same3BitChecker(out, in0, in1, in2);
 	ND2(out, or3, nand3);
 endmodule
 
-module same2BitChecker(out, in0, in1);
-	input in0, in1;
-	output out;
-
-	XNOR2(out, in0, in1);
-endmodule
-
 module identical4RanksChecker(out, in0, in1, in2, in3);
 	input [3:0] in0, in1, in2, in3;
 	output out;
@@ -389,17 +450,27 @@ module identical3RanksChecker(out, in0, in1, in2);
 	AN4(out, s3bc0, s3bc1, s3bc2, s3bc3);
 endmodule
 
-module identical2RanksChecker(out, in0, in1);
+module identical2RanksChecker(out, notOut, in0, in1);
 	input [3:0] in0, in1;
-	output out;
+	output out, notOut;
 
-	wire s2bc0, s2bc1, s2bc2, s2bc3;
-	same2BitChecker(s2bc0, in0[0], in1[0]);
-	same2BitChecker(s2bc1, in0[1], in1[1]);
-	same2BitChecker(s2bc2, in0[2], in1[2]);
-	same2BitChecker(s2bc3, in0[3], in1[3]);
+	// out = xnor +  and4 = 0.470 + 0.371 = 0.841
+	//	   =  xor +  nor4 = 0.343 + 0.345 = 0.688  <-- choose this
+	// out'= xnor + nand4 = 0.470 + 0.296 = 0.766  <-- choose this
+	//	   =  xor +   or4 = 0.343 + 0.472 = 0.815
+	wire xor0, xor1, xor2, xor3;
+	EO(xor0, in0[0], in1[0]);
+	EO(xor1, in0[1], in1[1]);
+	EO(xor2, in0[2], in1[2]);
+	EO(xor3, in0[3], in1[3]);
+	NR4(out, xor0, xor1, xor2, xor3);
 
-	AN4(out, s2bc0, s2bc1, s2bc2, s2bc3);
+	wire xnor0, xnor1, xnor2, xnor3;
+	XNOR2(xnor0, in0[0], in1[0]);
+	XNOR2(xnor1, in0[1], in1[1]);
+	XNOR2(xnor2, in0[2], in1[2]);
+	XNOR2(xnor3, in0[3], in1[3]);
+	ND4(notOut, xnor0, xnor1, xnor2, xnor3);
 endmodule
 
 module XNOR2(Z, A, B);
@@ -415,46 +486,38 @@ endmodule
 
 module OR5(Z,A,B,C,D,E);
 	// or 5
-	// f = a+b+c+d+e
-	//   = ((a+b+c)'(d+e)')'	, delay = nor3 + nand2 = 0.345 + 0.176 = 0.521
-	//   = ((a+b)'(c+d)'e')'	, delay = nor2 + nand3 = 0.227 + 0.226 = 0.453  <-- choose this
+	// use or6
 	input A, B, C, D, E;
 	output Z;
 	
-	wire nor21, nor22, notE;
-	NR2(nor21, A, B);
-	NR2(nor22, C, D);
-	IV(notE, E);
-	ND3(Z, nor21, nor22, notE);
+	OR6(Z,A,B,C,D,E,1'b0);
 endmodule
 
 module NR5(Z,A,B,C,D,E);
 	// nor 5
-	// f = (a+b+c+d+e)'
-	//   = (a+b+c)'(d+e)'	, delay = nor3 + and2 = 0.345 + 0.225 = 0.570
-	//	 = (a+b)'(c+d)'e'	, delay = nor2 + and3 = 0.227 + 0.275 = 0.502  <-- choose this
+	// use nor6
 	input A, B, C, D, E;
 	output Z;
 	
-	wire nor21, nor22, notE;
-	NR2(nor21, A, B);
-	NR2(nor22, C, D);
-	IV(notE, E);
-	AN3(Z, nor21, nor22, notE);
+	NR6(Z,A,B,C,D,E,1'b0);
+endmodule
+
+module ND5(Z,A,B,C,D,E);
+	// nand 6
+	// use nand6
+	input A, B, C, D, E;
+	output Z;
+	
+	ND6(Z,A,B,C,D,E,1'b1);
 endmodule
 
 module AN5(Z,A,B,C,D,E);
 	// and 5
-	// f = abcde
-	//   = ((abc)'+(de)')'	 , delay = nand3 + nor2 = 0.226 + 0.227 = 0.453  <-- choose this
-	//	 = ((ab)'+(cd)'+e')' , delay = nand2 + nor3 = 0.176 + 0.345 = 0.521
+	// use and6
 	input A, B, C, D, E;
 	output Z;
 	
-	wire nand3, nand2;
-	ND3(nand3, A, B, C);
-	ND2(nand2, D, E);
-	NR2(Z, nand3, nand2);
+	AN6(Z,A,B,C,D,E,1'b1);
 endmodule
 
 module OR6(Z,A,B,C,D,E,F);
@@ -494,7 +557,6 @@ module ND6(Z,A,B,C,D,E,F);
 	//   = (ab)'+(cd)'+(ef)'		, delay = nand2 +   or3 = 0.176 + 0.430 = 0.606
 	//	 = ((abc)(def))'			, delay =  and3 + nand2 = 0.275 + 0.176 = 0.451  <-- choose this
 	//   = ((ab)(cd)(ed))'			, delay =  and2 + nand3 = 0.225 + 0.226 = 0.451
-	// delay = 0.574
 	input A, B, C, D, E, F;
 	output Z;
 	
@@ -502,6 +564,19 @@ module ND6(Z,A,B,C,D,E,F);
 	AN3(and31, A, B, C);
 	AN3(and32, D, E, F);
 	ND2(Z, and31, and32);
+endmodule
+
+module AN6(Z,A,B,C,D,E,F);
+	// and8
+	// F = (abc)(def)					, delay =   and3 + and2 = 0.275 + 0.225 = 0.500
+	//   = [(abc)'+(def)']'				, delay =  nand3 + nor2 = 0.226 + 0.227 = 0.453  <-- choose this
+	input A, B, C, D, E, F;
+	output Z;
+	
+	wire nand31, nand32;
+	ND3(nand31, A, B, C);
+	ND3(nand32, D, E, F);
+	NR2(Z, nand31, nand32);
 endmodule
 
 module ND8(Z,A,B,C,D,E,F,G,H);
@@ -531,6 +606,34 @@ module AN8(Z,A,B,C,D,E,F,G,H);
 	ND4(nand41,A,B,C,D);
 	ND4(nand42,E,F,G,H);
 	NR2(Z,nand41,nand42);
+endmodule
+
+module ND9(Z,A,B,C,D,E,F,G,H,I);
+	// nand9
+	// F = [(abc)(def)(ghi)]'		, delay =  and3 + nand3 = 0.275 + 0.226 = 0.501  <-- choose this
+	input A,B,C,D;
+	input E,F,G,H,I;
+	output Z;
+	wire and31, and32, and33;
+	AN3(and31,A,B,C);
+	AN3(and32,D,E,F);
+	AN3(and33,G,H,I);
+	ND3(Z,and31,and32,and33);
+endmodule
+
+module AN9(Z,A,B,C,D,E,F,G,H,I);
+	// and8
+	// F = (abc)(def)(ghi)				, delay =   and3 + and3 = 0.275 + 0.275 = 0.550  <-- choose this
+	//   = [(abc)'+(def)'+(ghi)']'		, delay =  nand3 + nor3 = 0.226 + 0.345 = 0.571
+	//   = [(ab)'+(cd)'+(ef)'+(ghi)']'	, delay =  nand3 + nor4 (x)
+	input A,B,C,D;
+	input E,F,G,H,I;
+	output Z;
+	wire and31, and32, and33;
+	AN3(and31,A,B,C);
+	AN3(and32,D,E,F);
+	AN3(and33,G,H,I);
+	AN3(Z,and31,and32,and33);
 endmodule
 
 module OR10(Z,A,B,C,D,E,F,G,H,I,J);
