@@ -171,8 +171,8 @@ module theLeast4BitChangeChecker(out, notOut, in0, in1);
 	wire nand81, nand82;
 	ND8(nand81, not03, in0[2], in0[1], in0[0], in1[3], not12, not11, not10);
 	ND8(nand82, in0[3], not02, not01, not00, not13, in1[2], in1[1], in1[0]);
-	ND2(out, nand81, nand82);
-	AN2(notOut, nand81, nand82);
+	ND2(out, nand81, nand82);			// delay = iv + nand8 + nand2 = 0.127 + 0.501 + 0.176 = 0.804
+	AN2(notOut, nand81, nand82);		// delay = iv + nand8 +  and2 = 0.127 + 0.501 + 0.225 = 0.853
 endmodule
 
 module theLeast3BitChangeChecker(out, notOut, in0, in1);
@@ -183,7 +183,8 @@ module theLeast3BitChangeChecker(out, notOut, in0, in1);
 	// (in0[2:0] == 011 & in1[2:0] == 100) + (inverse)
 	// in0 = a, in1 = b
 	// check = a2'a1a0b2b1'b0' + a2a1'a0'b2'b1b0
-	//		 = [(a2'a1a0b2b1'b0')'&(a2a1'a0'b2'b1b0)']'
+	//		 = [(a2'a1a0b2b1'b0')'&(a2a1'a0'b2'b1b0)']'  , delay = iv + nand6 + nand2 = 0.127 + 0.451 + 0.176 = 0.754
+	// check'= ....										 , delay = iv + nand6 +  and2 = 0.127 + 0.451 + 0.225 = 0.803
 	wire not00, not01, not02, not10, not11, not12;
 	IV(not00, in0[0]);
 	IV(not01, in0[1]);
@@ -192,18 +193,18 @@ module theLeast3BitChangeChecker(out, notOut, in0, in1);
 	IV(not11, in1[1]);
 	IV(not12, in1[2]);
 
-	wire and1, nand1, nand61, nand62;
+	wire check, ncheck, nand61, nand62;
 	ND6(nand61, not02, in0[1], in0[0], in1[2], not11, not10);
 	ND6(nand62, in0[2], not01, not00, not12, in1[1], in1[0]);
-	AN2(and1, nand61, nand62);
-	ND2(nand1, nand61, nand62);
+	AN2(check, nand61, nand62);
+	ND2(ncheck, nand61, nand62);
 	
 	wire xor3, xnor3;
 	EO(xor3, in0[3], in1[3]);
 	XNOR2(xnor3, in0[3], in1[3]);
 
-	NR2(out, and1, xor3);
-	ND2(notOut, nand1, xnor3);
+	NR2(out, check, xor3);			// delay =  check +  nor2 = 0.754 + 0.227 = 0.981
+	ND2(notOut, ncheck, xnor3);		// delay = ncheck + nand2 = 0.803 + 0.176 = 0.979
 endmodule
 
 module theLeast2BitChangeChecker(out, notOut, in0, in1);
