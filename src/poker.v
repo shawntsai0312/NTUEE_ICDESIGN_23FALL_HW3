@@ -39,7 +39,7 @@ module poker(type, i0, i1, i2, i3, i4);
 
 	wire straight;
 	straightChecker(straight, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-	
+
 	// output tester
 	reg [3:0] typeReg;
 	always @(*) begin
@@ -79,7 +79,7 @@ module straightChecker(out, in0, in1, in2, in3, in4);
 
 	// case0 2,3,4,5,6
 	wire nCase1;
-	exist5GoalChecker(nCase6, 4'b0010, 4'b0011, 4'b0100, 4'b0101, 4'b0110, in0, in1, in2, in3, in4);
+	exist5GoalChecker(nCase1, 4'b0010, 4'b0011, 4'b0100, 4'b0101, 4'b0110, in0, in1, in2, in3, in4);
 
 	// case2 3,4,5,6,7
 	wire nCase2;
