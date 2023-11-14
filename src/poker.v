@@ -48,7 +48,7 @@ module poker(type, i0, i1, i2, i3, i4);
 			else 				typeReg = 4'b0101;
 			// typeReg = 4'b0101;
 		end
-		// else if(straight)		typeReg = 4'b0100;
+		else if(straight)		typeReg = 4'b0100;
 		else if(fourOfAKind)	typeReg = 4'b0111;
 		else if(fullHouse)		typeReg = 4'b0110;
 		else if(threeOfAKind)	typeReg = 4'b0011;
