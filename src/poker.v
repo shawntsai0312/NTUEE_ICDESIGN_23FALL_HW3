@@ -37,19 +37,18 @@ module poker(type, i0, i1, i2, i3, i4);
 	AN3(onePair, onePairPossible, notThreePossible, notTwoPossible);
 	ND3( notOne, onePairPossible, notThreePossible, notTwoPossible);
 
-	// straight
-	// 10,11,12,13,1 to be done
 	wire straight;
 	straightChecker(straight, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-
+	
 	// output tester
 	reg [3:0] typeReg;
 	always @(*) begin
 		if(flush) begin
 			if(straight)		typeReg = 4'b1000;
 			else 				typeReg = 4'b0101;
+			// typeReg = 4'b0101;
 		end
-		else if(straight)		typeReg = 4'b0100;
+		// else if(straight)		typeReg = 4'b0100;
 		else if(fourOfAKind)	typeReg = 4'b0111;
 		else if(fullHouse)		typeReg = 4'b0110;
 		else if(threeOfAKind)	typeReg = 4'b0011;
@@ -170,64 +169,65 @@ module fullHouseChecker(out, notOut, in0, in1, in2, in3, in4);
 	//	    =[( & )' & ( & )' & ... & ( & )']'		,delay = nand2 + nand10 = 0.176 + 0.571 = 0.747 <-- choose this
 	// out' = ...									,delay = nand2 +  and10 = 0.176 + 0.571 = 0.747 <-- choose this
 	// case0 012, 34
-	wire i3rc012, i2rc34, case0;
+	wire i3rc012, i2rc34, ni2rc34, case0;
 	identical3RanksChecker(i3rc012, in0, in1, in2);
-	identical2RanksChecker( i2rc34, in3, in4);
+	identical2RanksChecker(i2rc34,ni2rc34, in3, in4);
 	ND2(case0, i3rc012, i2rc34);
 
 	// case1 013, 24
-	wire i3rc013, i2rc24, case1;
+	wire i3rc013, i2rc24, ni2rc24, case1;
 	identical3RanksChecker(i3rc013, in0, in1, in3);
-	identical2RanksChecker( i2rc24, in2, in4);
+	identical2RanksChecker(i2rc24, ni2rc24, in2, in4);
 	ND2(case1, i3rc013, i2rc24);
 
 	// case2 014, 23
-	wire i3rc014, i2rc23, case2;
+	wire i3rc014, i2rc23, ni2rc23, case2;
 	identical3RanksChecker(i3rc014, in0, in1, in4);
-	identical2RanksChecker(i2rc23, in2, in3);
+	identical2RanksChecker(i2rc23, ni2rc23, in2, in3);
 	ND2(case2, i3rc014, i2rc23);
 
 	// case3 023, 14
-	wire i3rc023, i2rc14, case3;
+	wire i3rc023, i2rc14, ni2rc14, case3;
 	identical3RanksChecker(i3rc023, in0, in2, in3);
-	identical2RanksChecker(i2rc14, in1, in4);
+	identical2RanksChecker(i2rc14, ni2rc14, in1, in4);
 	ND2(case3, i3rc023, i2rc14);
 
 	// case4 024, 13
-	wire i3rc024, i2rc13, case4;
+	wire i3rc024, i2rc13, ni2rc13, case4;
 	identical3RanksChecker(i3rc024, in0, in2, in4);
-	identical2RanksChecker(i2rc13, in1, in3);
+	identical2RanksChecker(i2rc13, ni2rc13, in1, in3);
 	ND2(case4, i3rc024, i2rc13);
 
 	// case5 034, 12
-	wire i3rc034, i2rc12, case5;
+	wire i3rc034, i2rc12, ni2rc12, case5;
 	identical3RanksChecker(i3rc034, in0, in3, in4);
-	identical2RanksChecker(i2rc12, in1, in2);
+	identical2RanksChecker(i2rc12, ni2rc12, in1, in2);
 	ND2(case5, i3rc034, i2rc12);
 
 	// case6 123, 04
-	wire i3rc123, i2rc04, case6;
+	wire i3rc123, i2rc04, ni2rc04, case6;
 	identical3RanksChecker(i3rc123, in1, in2, in3);
-	identical2RanksChecker(i2rc04, in0, in4);
+	identical2RanksChecker(i2rc04, ni2rc04, in0, in4);
 	ND2(case6, i3rc123, i2rc04);
 
 	// case7 124, 03
-	wire i3rc124, i2rc03, case7;
+	wire i3rc124, i2rc03, ni2rc03, case7;
 	identical3RanksChecker(i3rc124, in1, in2, in4);
-	identical2RanksChecker(i2rc03, in0, in3);
+	identical2RanksChecker(i2rc03, ni2rc03, in0, in3);
 	ND2(case7, i3rc124, i2rc03);
 
 	// case8 134, 02
-	wire i3rc134, i2rc02, case8;
+	wire i3rc134, i2rc02, ni2rc02, case8;
 	identical3RanksChecker(i3rc134, in1, in3, in4);
-	identical2RanksChecker(i2rc02, in0, in2);
+	identical2RanksChecker(i2rc02, ni2rc02, in0, in2);
 	ND2(case8, i3rc134, i2rc02);
 
 	// case9 234, 01
-	wire i3rc234, i2rc01, case9;
+	wire i3rc234, i2rc01, ni2rc01, case9;
 	identical3RanksChecker(i3rc234, in2, in3, in4);
-	identical2RanksChecker(i2rc01, in0, in1);
+	identical2RanksChecker(i2rc01, ni2rc01, in0, in1);
 	ND2(case9, i3rc234, i2rc01);
+
 
 	ND10(   out, case0, case1, case2, case3, case4, case5, case6, case7, case8, case9);
 	AN10(notOut, case0, case1, case2, case3, case4, case5, case6, case7, case8, case9);
@@ -301,12 +301,13 @@ module twoPairsPossibleSubChecker(out, in0, in1, in2, in3);
 	output out;
 
 	wire same01, same02, same03, same12, same13, same23;
-	identical2RanksChecker(same01, in0, in1);
-	identical2RanksChecker(same02, in0, in2);
-	identical2RanksChecker(same03, in0, in3);
-	identical2RanksChecker(same12, in1, in2);
-	identical2RanksChecker(same13, in1, in3);
-	identical2RanksChecker(same23, in2, in3);
+	wire nsame01, nsame02, nsame03, nsame12, nsame13, nsame23;
+	identical2RanksChecker(same01, nsame01, in0, in1);
+	identical2RanksChecker(same02, nsame02, in0, in2);
+	identical2RanksChecker(same03, nsame03, in0, in3);
+	identical2RanksChecker(same12, nsame12, in1, in2);
+	identical2RanksChecker(same13, nsame13, in1, in3);
+	identical2RanksChecker(same23, nsame23, in2, in3);
 
 	// wire same0123, notSame0123;
 	// identical4RanksChecker(same0123, in0, in1, in2, in3);
@@ -332,44 +333,44 @@ module onePairPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	output out, notOut;
 
 	// rank0 = rank1
-	wire i2rc01;
-	identical2RanksChecker(i2rc01, in0, in1);
+	wire i2rc01, n0;
+	identical2RanksChecker(i2rc01, n0, in0, in1);
 
 	// rank0 = rank2
-	wire i2rc02;
-	identical2RanksChecker(i2rc02, in0, in2);
+	wire i2rc02, n1;
+	identical2RanksChecker(i2rc02, n1, in0, in2);
 
 	// rank0 = rank3
-	wire i2rc03;
-	identical2RanksChecker(i2rc03, in0, in3);
+	wire i2rc03, n2;
+	identical2RanksChecker(i2rc03, n2, in0, in3);
 
 	// rank0 = rank4
-	wire i2rc04;
-	identical2RanksChecker(i2rc04, in0, in4);
+	wire i2rc04, n3;
+	identical2RanksChecker(i2rc04, n3, in0, in4);
 
 	// rank1 = rank2
-	wire i2rc12;
-	identical2RanksChecker(i2rc12, in1, in2);
+	wire i2rc12, n4;
+	identical2RanksChecker(i2rc12, n4, in1, in2);
 
 	// rank1 = rank3
-	wire i2rc13;
-	identical2RanksChecker(i2rc13, in1, in3);
+	wire i2rc13, n5;
+	identical2RanksChecker(i2rc13, n5, in1, in3);
 
 	// rank1 = rank4
-	wire i2rc14;
-	identical2RanksChecker(i2rc14, in1, in4);
+	wire i2rc14, n6;
+	identical2RanksChecker(i2rc14, n6, in1, in4);
 
 	// rank2 = rank3
-	wire i2rc23;
-	identical2RanksChecker(i2rc23, in2, in3);
+	wire i2rc23, n7;
+	identical2RanksChecker(i2rc23, n7, in2, in3);
 
 	// rank2 = rank4
-	wire i2rc24;
-	identical2RanksChecker(i2rc24, in2, in4);
+	wire i2rc24, n8;
+	identical2RanksChecker(i2rc24, n8, in2, in4);
 
 	// rank3 = rank4
-	wire i2rc34;
-	identical2RanksChecker(i2rc34, in3, in4);
+	wire i2rc34, n9;
+	identical2RanksChecker(i2rc34, n9, in3, in4);
 
 	OR10(   out, i2rc01, i2rc02, i2rc03, i2rc04, i2rc12, i2rc13, i2rc14, i2rc23, i2rc24, i2rc34);
 	NR10(notOut, i2rc01, i2rc02, i2rc03, i2rc04, i2rc12, i2rc13, i2rc14, i2rc23, i2rc24, i2rc34);
