@@ -10,7 +10,7 @@ source ./tool.sh
 ```shell
 cd src
 ./check.sh
-./sim.sh
+./delay.sh
 ```
 
 #### Cases

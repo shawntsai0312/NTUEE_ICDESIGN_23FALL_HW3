@@ -37,7 +37,7 @@ module poker(type, i0, i1, i2, i3, i4);
 	wire [3:0] notTemp;
 	
 	assign temp[3] = 0;
-	assign temp[3] = 1;
+	assign notemp[3] = 1;
 
 	ND2 T2(temp[2], notFour, notFull);
 	AN2 N2(notTemp[2], notFour, notFull);
@@ -464,7 +464,7 @@ module same4BitChecker(out, in0, in1, in2, in3);
 	ND4(nand4, in0, in1, in2, in3);
 
 	wire or4;
-	Or4low(or4, in0, in1, in2, in3);
+	OR4low(or4, in0, in1, in2, in3);
 
 	ND2(out, nand4, or4);
 endmodule
@@ -525,32 +525,32 @@ module identical2RanksChecker(out, notOut, in0, in1);
 	EO(xor3, in0[3], in1[3]);
 
 	NR4(out, xor0, xor1, xor2, xor3);
-	Or4low(notOut, xor0, xor1, xor2, xor3);
+	OR4low(notOut, xor0, xor1, xor2, xor3);
 endmodule
 
-// module XNOR2(Z, A, B);
-// 	input A, B;
-// 	output Z;
-// 	// F = ab + (a+b)'		, delay = nor2 +   or2 = 0.227 + 0.300 = 0.527
-// 	//   = [(ab)' & (a+b)]'	, delay =  or2 + nand2 = 0.300 + 0.176 = 0.476
-// 	//   = (a'b+ab')'   	, delay = xor2 +   inv = 0.343 + 0.127 = 0.470 <-- choose this
-// 	// MUX21(f, a', a, b)	, delay =  inv +   mux = 0.127 + 0.347 = 0.474
-// 	// although we can use xnor, but the delay is too high !!!
-// 	wire xor2;
-// 	EO(xor2, A, B);
-// 	IV(Z, xor2);
-// endmodule
+module XNOR2(Z, A, B);
+	input A, B;
+	output Z;
+	// F = ab + (a+b)'		, delay = nor2 +   or2 = 0.227 + 0.300 = 0.527
+	//   = [(ab)' & (a+b)]'	, delay =  or2 + nand2 = 0.300 + 0.176 = 0.476
+	//   = (a'b+ab')'   	, delay = xor2 +   inv = 0.343 + 0.127 = 0.470 <-- choose this
+	// MUX21(f, a', a, b)	, delay =  inv +   mux = 0.127 + 0.347 = 0.474
+	// although we can use xnor, but the delay is too high !!!
+	wire xor2;
+	EO(xor2, A, B);
+	IV(Z, xor2);
+endmodule
 
-// module Or3low(Z,A,B,C);
-// 	input A, B, C;
-// 	output Z;
+module OR3low(Z,A,B,C);
+	input A, B, C;
+	output Z;
 
-// 	// original or3 = 0.43
-// 	// use or4low instead
-// 	Or4low(Z, A, B, C, 1'b0);
-// endmodule
+	// original or3 = 0.43
+	// use or4low instead
+	OR4low(Z, A, B, C, 1'b0);
+endmodule
 
-module Or4low(Z,A,B,C,D);
+module OR4low(Z,A,B,C,D);
 	input A, B, C, D;
 	output Z;
 
@@ -581,15 +581,6 @@ module NR5(Z,A,B,C,D,E);
 	NR6(Z,A,B,C,D,E,1'b0);
 endmodule
 
-module ND5(Z,A,B,C,D,E);
-	// nand 6
-	// use nand6
-	input A, B, C, D, E;
-	output Z;
-	
-	ND6(Z,A,B,C,D,E,1'b1);
-endmodule
-
 module AN5(Z,A,B,C,D,E);
 	// and 5
 	// use and6
@@ -597,6 +588,15 @@ module AN5(Z,A,B,C,D,E);
 	output Z;
 	
 	AN6(Z,A,B,C,D,E,1'b1);
+endmodule
+
+module ND5(Z,A,B,C,D,E);
+	// nand 6
+	// use nand6
+	input A, B, C, D, E;
+	output Z;
+	
+	ND6(Z,A,B,C,D,E,1'b1);
 endmodule
 
 module OR6(Z,A,B,C,D,E,F);
@@ -629,6 +629,20 @@ module NR6(Z,A,B,C,D,E,F);
 	AN3(Z, nor21, nor22, nor23);
 endmodule
 
+module AN6(Z,A,B,C,D,E,F);
+	// and6
+	// F = (abc)(def)					, delay =   and3 + and2 = 0.275 + 0.225 = 0.500
+	//   = [(abc)'+(def)']'				, delay =  nand3 + nor2 = 0.226 + 0.227 = 0.453  <-- choose this
+	//	 = [(ab)'+(cd)'+(ef)']'			, delay =  nand2 + nor3 = 0.176 + 0.345 = 0.521
+	input A, B, C, D, E, F;
+	output Z;
+	
+	wire nand31, nand32;
+	ND3(nand31, A, B, C);
+	ND3(nand32, D, E, F);
+	NR2(Z, nand31, nand32);
+endmodule
+
 module ND6(Z,A,B,C,D,E,F);
 	// nand 6
 	// f = (abcdef)'
@@ -645,104 +659,90 @@ module ND6(Z,A,B,C,D,E,F);
 	ND2(Z, and31, and32);
 endmodule
 
-module AN6(Z,A,B,C,D,E,F);
-	// and6
-	// F = (abc)(def)					, delay =   and3 + and2 = 0.275 + 0.225 = 0.500
-	//   = [(abc)'+(def)']'				, delay =  nand3 + nor2 = 0.226 + 0.227 = 0.453  <-- choose this
-	//	 = [(ab)'+(cd)'+(ef)']'			, delay =  nand2 + nor3 = 0.176 + 0.345 = 0.521
-	input A, B, C, D, E, F;
+module OR8(Z,A,B,C,D,E,F,G,H);
+	// nor8
+	// F = (a+b+c)'(d+e+f)'(g+h)		, delay =  nor3 + and3 = 0.345 + 0.275 = 0.620
+	//   = (a+b+c+d)'(e+f+g+h)'			, delay =  nor4 + and2 = 0.345 + 0.225 = 0.570  <-- choose this
+	//   = (a+b)'(c+d)'(e+f)'(g+h)'		, delay =  nor2 + and4 = 0.227 + 0.371 = 0.598
+	input A,B,C,D;
+	input E,F,G,H;
 	output Z;
-	
-	wire nand31, nand32;
-	ND3(nand31, A, B, C);
-	ND3(nand32, D, E, F);
-	NR2(Z, nand31, nand32);
+	wire nor41, nor42;
+	NR4(nor41,A,B,C,D);
+	NR4(nor42,E,F,G,H);
+	ND2(Z, nor41, nor42);
 endmodule
 
-// module OR8(Z,A,B,C,D,E,F,G,H);
-// 	// nor8
-// 	// F = (a+b+c)'(d+e+f)'(g+h)		, delay =  nor3 + and3 = 0.345 + 0.275 = 0.620
-// 	//   = (a+b+c+d)'(e+f+g+h)'			, delay =  nor4 + and2 = 0.345 + 0.225 = 0.570  <-- choose this
-// 	//   = (a+b)'(c+d)'(e+f)'(g+h)'		, delay =  nor2 + and4 = 0.227 + 0.371 = 0.598
-// 	input A,B,C,D;
-// 	input E,F,G,H;
-// 	output Z;
-// 	wire nor41, nor42;
-// 	NR4(nor41,A,B,C,D);
-// 	NR4(nor42,E,F,G,H);
-// 	ND2(Z, nor41, nor42);
-// endmodule
+module NR8(Z,A,B,C,D,E,F,G,H);
+	// nor8
+	// F = [(a+b+c)'(d+e+f)'(g+h)]'			, delay =  nor3 + nand3 = 0.345 + 0.226 = 0.571
+	//   = [(a+b+c+d)'(e+f+g+h)']'			, delay =  nor4 + nand2 = 0.345 + 0.176 = 0.521  <-- choose this
+	//   = [(a+b)'(c+d)'(e+f)'(g+h)']'		, delay =  nor2 + nand4 = 0.227 + 0.296 = 0.523
+	input A,B,C,D;
+	input E,F,G,H;
+	output Z;
+	wire nor41, nor42;
+	NR4(nor41,A,B,C,D);
+	NR4(nor42,E,F,G,H);
+	ND2(Z, nor41, nor42);
+endmodule
 
-// module NR8(Z,A,B,C,D,E,F,G,H);
-// 	// nor8
-// 	// F = [(a+b+c)'(d+e+f)'(g+h)]'			, delay =  nor3 + nand3 = 0.345 + 0.226 = 0.571
-// 	//   = [(a+b+c+d)'(e+f+g+h)']'			, delay =  nor4 + nand2 = 0.345 + 0.176 = 0.521  <-- choose this
-// 	//   = [(a+b)'(c+d)'(e+f)'(g+h)']'		, delay =  nor2 + nand4 = 0.227 + 0.296 = 0.523
-// 	input A,B,C,D;
-// 	input E,F,G,H;
-// 	output Z;
-// 	wire nor41, nor42;
-// 	NR4(nor41,A,B,C,D);
-// 	NR4(nor42,E,F,G,H);
-// 	ND2(Z, nor41, nor42);
-// endmodule
+module AN8(Z,A,B,C,D,E,F,G,H);
+	// and8
+	// F = (abc)(def)(gh)				, delay =   and3 + and3 = 0.275 + 0.275 = 0.550
+	//   = [(abc)'+(def)'+(gh)']'		, delay =  nand3 + nor3 = 0.226 + 0.345 = 0.571
+	//   = [(abcd)'+(efgh)']'			, delay =  nand4 + nor2 = 0.296 + 0.227 = 0.523  <-- choose this
+	input A,B,C,D;
+	input E,F,G,H;
+	output Z;
+	wire nand41, nand42;
+	ND4(nand41,A,B,C,D);
+	ND4(nand42,E,F,G,H);
+	NR2(Z,nand41,nand42);
+endmodule
 
-// module ND8(Z,A,B,C,D,E,F,G,H);
-// 	// nand8
-// 	// F = [(abc)(def)(gh)]'		, delay =  and3 + nand3 = 0.275 + 0.226 = 0.501  <-- choose this
-// 	//   = [(abcd)(efgh)]'			, delay =  and4 + nand2 = 0.371 + 0.176 = 0.547
-// 	//   = [(ab)(cd)(ef)(gh)]'		, delay =  and2 + nand4 = 0.225 + 0.296 = 0.521
-// 	input A,B,C,D;
-// 	input E,F,G,H;
-// 	output Z;
-// 	wire and2, and31, and32;
-// 	AN3(and31,A,B,C);
-// 	AN3(and32,D,E,F);
-// 	AN2(and2,G,H);
-// 	ND3(Z,and31,and32,and2);
-// endmodule
+module ND8(Z,A,B,C,D,E,F,G,H);
+	// nand8
+	// F = [(abc)(def)(gh)]'		, delay =  and3 + nand3 = 0.275 + 0.226 = 0.501  <-- choose this
+	//   = [(abcd)(efgh)]'			, delay =  and4 + nand2 = 0.371 + 0.176 = 0.547
+	//   = [(ab)(cd)(ef)(gh)]'		, delay =  and2 + nand4 = 0.225 + 0.296 = 0.521
+	input A,B,C,D;
+	input E,F,G,H;
+	output Z;
+	wire and2, and31, and32;
+	AN3(and31,A,B,C);
+	AN3(and32,D,E,F);
+	AN2(and2,G,H);
+	ND3(Z,and31,and32,and2);
+endmodule
 
-// module AN8(Z,A,B,C,D,E,F,G,H);
-// 	// and8
-// 	// F = (abc)(def)(gh)				, delay =   and3 + and3 = 0.275 + 0.275 = 0.550
-// 	//   = [(abc)'+(def)'+(gh)']'		, delay =  nand3 + nor3 = 0.226 + 0.345 = 0.571
-// 	//   = [(abcd)'+(efgh)']'			, delay =  nand4 + nor2 = 0.296 + 0.227 = 0.523  <-- choose this
-// 	input A,B,C,D;
-// 	input E,F,G,H;
-// 	output Z;
-// 	wire nand41, nand42;
-// 	ND4(nand41,A,B,C,D);
-// 	ND4(nand42,E,F,G,H);
-// 	NR2(Z,nand41,nand42);
-// endmodule
+module AN9(Z,A,B,C,D,E,F,G,H,I);
+	// and9
+	// F = (abc)(def)(ghi)				, delay =   and3 + and3 = 0.275 + 0.275 = 0.550  <-- choose this
+	//   = [(abc)'+(def)'+(ghi)']'		, delay =  nand3 + nor3 = 0.226 + 0.345 = 0.571
+	//   = [(ab)'+(cd)'+(ef)'+(ghi)']'	, delay =  nand3 + nor4 (x)
+	input A,B,C,D;
+	input E,F,G,H,I;
+	output Z;
+	wire and31, and32, and33;
+	AN3(and31,A,B,C);
+	AN3(and32,D,E,F);
+	AN3(and33,G,H,I);
+	AN3(Z,and31,and32,and33);
+endmodule
 
-// module ND9(Z,A,B,C,D,E,F,G,H,I);
-// 	// nand9
-// 	// F = [(abc)(def)(ghi)]'		, delay =  and3 + nand3 = 0.275 + 0.226 = 0.501  <-- choose this
-// 	input A,B,C,D;
-// 	input E,F,G,H,I;
-// 	output Z;
-// 	wire and31, and32, and33;
-// 	AN3(and31,A,B,C);
-// 	AN3(and32,D,E,F);
-// 	AN3(and33,G,H,I);
-// 	ND3(Z,and31,and32,and33);
-// endmodule
-
-// module AN9(Z,A,B,C,D,E,F,G,H,I);
-// 	// and9
-// 	// F = (abc)(def)(ghi)				, delay =   and3 + and3 = 0.275 + 0.275 = 0.550  <-- choose this
-// 	//   = [(abc)'+(def)'+(ghi)']'		, delay =  nand3 + nor3 = 0.226 + 0.345 = 0.571
-// 	//   = [(ab)'+(cd)'+(ef)'+(ghi)']'	, delay =  nand3 + nor4 (x)
-// 	input A,B,C,D;
-// 	input E,F,G,H,I;
-// 	output Z;
-// 	wire and31, and32, and33;
-// 	AN3(and31,A,B,C);
-// 	AN3(and32,D,E,F);
-// 	AN3(and33,G,H,I);
-// 	AN3(Z,and31,and32,and33);
-// endmodule
+module ND9(Z,A,B,C,D,E,F,G,H,I);
+	// nand9
+	// F = [(abc)(def)(ghi)]'		, delay =  and3 + nand3 = 0.275 + 0.226 = 0.501  <-- choose this
+	input A,B,C,D;
+	input E,F,G,H,I;
+	output Z;
+	wire and31, and32, and33;
+	AN3(and31,A,B,C);
+	AN3(and32,D,E,F);
+	AN3(and33,G,H,I);
+	ND3(Z,and31,and32,and33);
+endmodule
 
 module OR10(Z,A,B,C,D,E,F,G,H,I,J);
 	// or10
@@ -775,6 +775,22 @@ module NR10(Z,A,B,C,D,E,F,G,H,I,J);
 	AN3(Z,nor31,nor32,nor4);
 endmodule
 
+module AN10(Z,A,B,C,D,E,F,G,H,I,J);
+	// and10
+	// F = (abc)(def)(ghij)				, delay =   and4 + and3 = 0.371 + 0.275 = 0.646
+	//   = [(abc)'+(def)'+(gh)'+(ij)']'	, delay =  nand3 + nor4 = 0.226 + 0.345 = 0.571  <-- choose this
+	//   = [(abc)'+(def)'+(ghij)']'		, delay =  nand4 + nor3 = 0.296 + 0.345 = 0.641
+	input A,B,C,D,E;
+	input F,G,H,I,J;
+	output Z;
+	wire nand21, nand22, nand31, nand32;
+	ND3(nand31,A,B,C);
+	ND3(nand32,D,E,F);
+	ND2(nand21,G,H);
+	ND2(nand22,I,J);
+	NR4(Z,nand31,nand32,nand21,nand22);
+endmodule
+
 module ND10(Z,A,B,C,D,E,F,G,H,I,J);
 	// nand10
 	// F = [(abc)(def)(ghij)]'		, delay =  and4 + nand3 = 0.371 + 0.226 = 0.697
@@ -789,20 +805,4 @@ module ND10(Z,A,B,C,D,E,F,G,H,I,J);
 	AN2(and21,G,H);
 	AN2(and22,I,J);
 	ND4(Z,and31,and32,and21,and22);
-endmodule
-
-module AN10(Z,A,B,C,D,E,F,G,H,I,J);
-	// and10
-	// F = (abc)(def)(ghij)				, delay =   and4 + and3 = 0.371 + 0.275 = 0.646
-	//   = [(abc)'+(def)'+(gh)'+(ij)']'	, delay =  nand3 + nor4 = 0.226 + 0.345 = 0.571 <-- choose this
-	//   = [(abc)'+(def)'+(ghij)']'		, delay =  nand4 + nor3 = 0.296 + 0.345 = 0.641
-	input A,B,C,D,E;
-	input F,G,H,I,J;
-	output Z;
-	wire nand21, nand22, nand31, nand32;
-	ND3(nand31,A,B,C);
-	ND3(nand32,D,E,F);
-	ND2(nand21,G,H);
-	ND2(nand22,I,J);
-	NR4(Z,nand31,nand32,nand21,nand22);
 endmodule
