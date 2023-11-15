@@ -15,8 +15,7 @@ module poker(type, i0, i1, i2, i3, i4);
 
 	// four of a kind
 	wire fourOfAKind, notFour;
-	fourOfAKindChecker(fourOfAKind, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-	IV(notFour, fourOfAKind);
+	fourOfAKindChecker(fourOfAKind, notFour, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
 	// full house
 	wire fullHouse, notFull;
@@ -48,19 +47,18 @@ module poker(type, i0, i1, i2, i3, i4);
 
 	
 	wire [3:0] temp;
-	wire temp0Nand3;
+	
 	assign temp[3] = 0;
-	ND2(temp[2], notFour, notFull);
-	ND3(temp[1], notFour, notThreePossible, notTwoPossible);
-	ND3(temp0Nand3, notFull, notTwoPossible, onePairPossible);
-	ND2(temp[0], notFour, temp0Nand3);
+	ND2 T2(temp[2], notFour, notFull);
+	ND3 T1(temp[1], notFour, notThreePossible, notTwoPossible);
 
-	MUX4CBus(type, temp, 4'b0100, 4'b0101, 4'b1000, flush, straight);
+	wire temp0Nand2;
+	ND2 T01(temp0Nand2, notTwoPossible, onePairPossible);
+	ND2 T02(temp[0], notFour, temp0Nand2);
 
-	// assign type[2:0] = 3'b000;
-	// assign type[3] = straight;
+	MUX4CBus(type, temp, 4'b0100, 4'b0101, 4'b1000, flush, straight); // temp, straight too high
 
-	// output tester
+// output tester
 	// reg [3:0] typeReg;
 	// always @(*) begin
 	// 	if(flush) begin
@@ -227,9 +225,9 @@ module existGoalChecker(out, goal, in0, in1, in2, in3, in4);
 	ND5(out, nCheck0, nCheck1, nCheck2, nCheck3, nCheck4);
 endmodule
 
-module fourOfAKindChecker(out, in0, in1, in2, in3, in4);
+module fourOfAKindChecker(out, notOut, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
-	output out;
+	output out, notOut;
 
 	wire i4rc0123, i4rc0124, i4rc0134, i4rc0234, i4rc1234;
 	identical4RanksChecker(i4rc0123, in0, in1, in2, in3);
@@ -238,7 +236,8 @@ module fourOfAKindChecker(out, in0, in1, in2, in3, in4);
 	identical4RanksChecker(i4rc0234, in0, in2, in3, in4);
 	identical4RanksChecker(i4rc1234, in1, in2, in3, in4);
 
-	OR5(out, i4rc0123, i4rc0124, i4rc0134, i4rc0234, i4rc1234);
+	OR5(   out, i4rc0123, i4rc0124, i4rc0134, i4rc0234, i4rc1234);
+	NR5(notOut, i4rc0123, i4rc0124, i4rc0134, i4rc0234, i4rc1234);
 endmodule
 
 module fullHouseChecker(out, notOut, in0, in1, in2, in3, in4);
@@ -246,9 +245,9 @@ module fullHouseChecker(out, notOut, in0, in1, in2, in3, in4);
 	output out, notOut;
 
 	// use ChatGPT to generate those cases in short time
-	// out  = ( & )  + ( & )  + ... + ( & ) 		,delay =  and2 +   or10 = 0.225 + 0.571 = 0.796
-	//	    =[( & )' & ( & )' & ... & ( & )']'		,delay = nand2 + nand10 = 0.176 + 0.571 = 0.747 <-- choose this
-	// out' = ...									,delay = nand2 +  and10 = 0.176 + 0.571 = 0.747 <-- choose this
+	// out  = ( & )  + ( & )  + ... + ( & ) 		, delay =  and2 +   or10 = 0.225 + 0.571 = 0.796
+	//	    =[( & )' & ( & )' & ... & ( & )']'		, delay = nand2 + nand10 = 0.176 + 0.571 = 0.747  <-- choose this
+	// out' = ...									, delay = nand2 +  and10 = 0.176 + 0.571 = 0.747  <-- choose this
 	// case0 012, 34
 	wire i3rc012, i2rc34, ni2rc34, case0;
 	identical3RanksChecker(i3rc012, in0, in1, in2);
@@ -460,8 +459,11 @@ endmodule
 module same5BitChecker(out, in0, in1, in2, in3, in4);
 	input in0, in1, in2, in3, in4;
 	output out;
-	// F = abcde + (a+b+c+d+e)'
-	//	 = [(abcde)' (a+b+c+d+e)]'
+	// F = abcde + a'b'c'd'e'
+	//   = abcde + (a+b+c+d+e)'					, delay =  and5 +   or2 = 0.453 + 0.300 = 0.753
+	//   = [(abcde)' (a+b+c+d+e)]'				, delay =   or5 + nand2 = 0.453 + 0.176 = 0.629  <-- choose this
+	//   = (a^b)' & (b^c)' & (c^d)'	& (d^e)'	, delay = xnor2 +  and4 = 0.470 + 0.371 = 0.841
+	//   = [(a^b) + (b^c) + (c^d) + (d^e)]'		, delay =  xor2 +  nor4 = 0.343 + 0.345 = 0.688
 
 	wire and3, nand5;
 	AN3( and3,	in0, in1, in2);
@@ -476,17 +478,17 @@ endmodule
 module same4BitChecker(out, in0, in1, in2, in3);
 	input in0, in1, in2, in3;
 	output out;
-	// F = abcd + (a+b+c+d)'			delay = and4 + or2 = 0.371 + 0.300 = 0.671
-	//   = [(abcd)' (a+b+c+d)]'		delay = or4 + iv + nd2 = 0.345 + 0.127 + 0.176 = 0.648
-	// nor4 -> inverter = 0.345 + 0.127 = 0.472
-	// or4 = 0.544
+	// F = abcd + a'b'c'd'
+	//   = abcd + (a+b+c+d)'			, delay =  and4 +   or2 = 0.371 + 0.300 = 0.671
+	//   = [(abcd)' (a+b+c+d)]'			, delay =   or4 + nand2 = 0.403 + 0.176 = 0.579  <-- choose this
+	//   = (a^b)' & (b^c)' & (c^d)'		, delay = xnor2 +  and3 = 0.470 + 0.275 = 0.745
+	//   = [(a^b) + (b^c) + (c^d)]'		, delay =  xor2 +  nor3 = 0.343 + 0.345 = 0.688
 
 	wire nand4;
 	ND4(nand4, in0, in1, in2, in3);
 
-	wire nor4, or4;
-	NR4(nor4, in0, in1, in2, in3);
-	IV(or4,nor4);
+	wire or4;
+	Or4low(or4, in0, in1, in2, in3);
 
 	ND2(out, nand4, or4);
 endmodule
@@ -494,16 +496,16 @@ endmodule
 module same3BitChecker(out, in0, in1, in2);
 	input in0, in1, in2;
 	output out;
-	// F = abc + (a+b+c)'		delay = nor3 + or2  = 0.349 + 0.300 = 0.649
-	//   = [(abc)' (a+b+c)]'	delay = or3 + nand2 = 0.430 + 0.176 = 0.606
+	// F = abc + a'b'c'
+	//   = abc + (a+b+c)'		, delay =  nor3 +   or2 = 0.345 + 0.300 = 0.645
+	//   = [(abc)' (a+b+c)]'	, delay =   or3 + nand2 = 0.430 + 0.176 = 0.606
+	//   = (a^b)' & (b^c)'		, delay = xnor2 +  and2 = 0.470 + 0.225 = 0.695
+	//   = [(a^b) + (b^c)]'		, delay =  xor2 +  nor2 = 0.343 + 0.227 = 0.570  <-- choose this
 
-	wire or3;
-	OR3(or3, in0, in1, in2);
-
-	wire nand3;
-	ND3(nand3, in0, in1, in2);
-
-	ND2(out, or3, nand3);
+	wire xor1, xor2;
+	EO(xor1, in0, in1);
+	EO(xor2, in1, in2);
+	NR2(out, xor1, xor2);
 endmodule
 
 module identical4RanksChecker(out, in0, in1, in2, in3);
@@ -558,12 +560,36 @@ endmodule
 module XNOR2(Z, A, B);
 	input A, B;
 	output Z;
-	// F = ab + (a+b)'	, delay = nor2 + or2 = 0.227 + 0.300 = 0.527
-	//   = (a'b+ab')'   , delay = xor2 + inv = 0.343 + 0.127 = 0.470 <-- choose this
+	// F = ab + (a+b)'		, delay = nor2 +   or2 = 0.227 + 0.300 = 0.527
+	//   = [(ab)' & (a+b)]'	, delay =  or2 + nand2 = 0.300 + 0.176 = 0.476
+	//   = (a'b+ab')'   	, delay = xor2 +   inv = 0.343 + 0.127 = 0.470 <-- choose this
+	// MUX21(f, a', a, b)	, delay =  inv +   mux = 0.127 + 0.347 = 0.474
 	// although we can use xnor, but the delay is too high !!!
 	wire xor2;
 	EO(xor2, A, B);
 	IV(Z, xor2);
+endmodule
+
+module Or3low(Z,A,B,C);
+	input A, B, C;
+	output Z;
+
+	// original or3 = 0.43
+	// use or4low instead
+	Or4low(Z, A, B, C, 1'b0);
+endmodule
+
+module Or4low(Z,A,B,C,D);
+	input A, B, C, D;
+	output Z;
+
+	// original or4 = 0.544
+	// z = a + b + c + d
+	//   = [(a+b)'&(c+d)']'		, delay = nor2 + nand2 = 0.227 + 0.176 = 0.403
+	wire nor21, nor22;
+	NR2(nor21, A, B);
+	NR2(nor22, C, D);
+	ND2(Z, nor21, nor22);
 endmodule
 
 module OR5(Z,A,B,C,D,E);
@@ -636,9 +662,9 @@ module ND6(Z,A,B,C,D,E,F);
 	// nand 6
 	// f = (abcdef)'
 	//   = (abc)'+(def)'			, delay = nand3 +   or2 = 0.226 + 0.300 = 0.526
-	//   = (ab)'+(cd)'+(ef)'		, delay = nand2 +   or3 = 0.176 + 0.430 = 0.606
+	//   = (ab)'+(cd)'+(ef)'		, delay = nand2 +   or3 = 0.176 + 0.403 = 0.579
 	//	 = ((abc)(def))'			, delay =  and3 + nand2 = 0.275 + 0.176 = 0.451  <-- choose this
-	//   = ((ab)(cd)(ed))'			, delay =  and2 + nand3 = 0.225 + 0.226 = 0.451
+	//   = ((ab)(cd)(ef))'			, delay =  and2 + nand3 = 0.225 + 0.226 = 0.451
 	input A, B, C, D, E, F;
 	output Z;
 	
@@ -704,7 +730,7 @@ module ND9(Z,A,B,C,D,E,F,G,H,I);
 endmodule
 
 module AN9(Z,A,B,C,D,E,F,G,H,I);
-	// and8
+	// and9
 	// F = (abc)(def)(ghi)				, delay =   and3 + and3 = 0.275 + 0.275 = 0.550  <-- choose this
 	//   = [(abc)'+(def)'+(ghi)']'		, delay =  nand3 + nor3 = 0.226 + 0.345 = 0.571
 	//   = [(ab)'+(cd)'+(ef)'+(ghi)']'	, delay =  nand3 + nor4 (x)
@@ -736,7 +762,7 @@ endmodule
 
 module NR10(Z,A,B,C,D,E,F,G,H,I,J);
 	// nor10
-	// F = [(a+b+c)+(d+e+f)+(g+h+i+j)]'		, delay =  or4 + nor3 = 0.472 + 0.345 = 0.818
+	// F = [(a+b+c)+(d+e+f)+(g+h+i+j)]'		, delay =  or4 + nor3 = 0.403 + 0.345 = 0.748
 	//   = (a+b+c+0)'(d+e+f+0)'(g+h+i+j)'	, delay = nor4 + and3 = 0.345 + 0.275 = 0.620 <-- choose this
 	//	 = (a+b+c+0)'(d+e+f+0)'(g+h)'(i+j)'	, delay = nor3 + and4 = 0.345 + 0.371 = 0.716
 	input A,B,C,D,E;
@@ -753,7 +779,7 @@ module ND10(Z,A,B,C,D,E,F,G,H,I,J);
 	// nand10
 	// F = [(abc)(def)(ghij)]'		, delay =  and4 + nand3 = 0.371 + 0.226 = 0.697
 	//   = [(abc)(def)(gh)(ij)]'	, delay =  and3 + nand4 = 0.275 + 0.296 = 0.571  <-- choose this
-	//   = (abc)'+(def)'+(ghij)'	, delay = nand4 +   or3 = 0.296 + 0.430 = 0.726
+	//   = (abc)'+(def)'+(ghij)'	, delay = nand4 +   or3 = 0.296 + 0.403 = 0.699
 	input A,B,C,D,E;
 	input F,G,H,I,J;
 	output Z;
