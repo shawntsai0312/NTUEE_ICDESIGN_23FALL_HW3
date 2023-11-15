@@ -222,7 +222,8 @@ module existGoalChecker(out, goal, in0, in1, in2, in3, in4);
 	identical2RanksChecker(check3, nCheck3, goal, in3);
 	identical2RanksChecker(check4, nCheck4, goal, in4);
 
-	ND5(out, nCheck0, nCheck1, nCheck2, nCheck3, nCheck4);
+	OR5(out, check0, check1, check2, check3, check4);
+	// ND5(out, nCheck0, nCheck1, nCheck2, nCheck3, nCheck4);
 endmodule
 
 module fourOfAKindChecker(out, notOut, in0, in1, in2, in3, in4);
@@ -365,20 +366,22 @@ module twoPairsPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
 	output out, notOut;
 
-	wire sub0123, sub0124, sub0134, sub0234, sub1234;
-	twoPairsPossibleSubChecker(sub0123, in0, in1, in2, in3);
-	twoPairsPossibleSubChecker(sub0124, in0, in1, in2, in4);
-	twoPairsPossibleSubChecker(sub0134, in0, in1, in3, in4);
-	twoPairsPossibleSubChecker(sub0234, in0, in2, in3, in4);
-	twoPairsPossibleSubChecker(sub1234, in1, in2, in3, in4);
+	wire  sub0123,  sub0124,  sub0134,  sub0234, sub1234;
+	wire nSub0123, nSub0124, nSub0134, nSub0234, sub1234;
+	twoPairsPossibleSubChecker(sub0123, nSub0123, in0, in1, in2, in3);
+	twoPairsPossibleSubChecker(sub0124, nSub0124, in0, in1, in2, in4);
+	twoPairsPossibleSubChecker(sub0134, nSub0134, in0, in1, in3, in4);
+	twoPairsPossibleSubChecker(sub0234, nSub0234, in0, in2, in3, in4);
+	twoPairsPossibleSubChecker(sub1234, nSub1234, in1, in2, in3, in4);
 
-	OR5(   out, sub0123, sub0124, sub0134, sub0234, sub1234);
-	NR5(notOut, sub0123, sub0124, sub0134, sub0234, sub1234);
+	OR5(   out,  sub0123,  sub0124,  sub0134,  sub0234,  sub1234);
+	NR5(notout,  sub0123,  sub0124,  sub0134,  sub0234,  sub1234);
+	// ND5(notOut, nSub0123, nSub0124, nSub0134, nSub0234, nSub1234);
 endmodule
 
-module twoPairsPossibleSubChecker(out, in0, in1, in2, in3);
+module twoPairsPossibleSubChecker(out, notOut, in0, in1, in2, in3);
 	input [3:0] in0, in1, in2, in3;
-	output out;
+	output out, notOut;
 
 	wire same01, same02, same03, same12, same13, same23;
 	wire nsame01, nsame02, nsame03, nsame12, nsame13, nsame23;
@@ -405,7 +408,8 @@ module twoPairsPossibleSubChecker(out, in0, in1, in2, in3);
 	// case2 : check if rank0 = rank3 = x and rank1 = rank2 = y but x != y
 	ND2(case2, same03, same12);
 
-	ND3(out, case0, case1, case2);
+	ND3(   out, case0, case1, case2);
+	AN3(notOut, case0, case1, casae2);
 endmodule
 
 module onePairPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
