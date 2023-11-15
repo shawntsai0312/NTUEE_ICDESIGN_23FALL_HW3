@@ -5,10 +5,13 @@ module poker(type, i0, i1, i2, i3, i4);
 	input  [5:0] i0, i1, i2, i3, i4;
 	output [3:0] type;
 //---------------------------------------------------
+	always @(*) begin
+
+	end
 
 	// flush
-	wire flush;
-	flushChecker(flush, i0[5:4], i1[5:4], i2[5:4], i3[5:4], i4[5:4]);
+	wire flush, notFlush;
+	flushChecker(flush, notFlush, i0[5:4], i1[5:4], i2[5:4], i3[5:4], i4[5:4]);
 
 	// four of a kind
 	wire fourOfAKind, notFour;
@@ -20,58 +23,135 @@ module poker(type, i0, i1, i2, i3, i4);
 	fullHouseChecker(fullHouse, notFull, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 
 	// three of a kind
-	wire threeOfAKind, threeOfAKinkPossible, notThree, notThreePossible;
-	threeOfAKindPossibleChecker(threeOfAKinkPossible, notThreePossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
-	AN2(threeOfAKind, threeOfAKinkPossible, notFull);
-	ND2(notThree, threeOfAKinkPossible, notFull);
+	wire threeOfAKindPossible, notThreePossible;
+	wire threeOfAKind, notThree;
+	threeOfAKindPossibleChecker(threeOfAKindPossible, notThreePossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
+	AN2(threeOfAKind, threeOfAKindPossible, notFull);
+	ND2(notThree, threeOfAKindPossible, notFull);
 
 	// two pairs
-	wire twoPairs, twoPairsPossible, notTwo, notTwoPossible;
+	wire twoPairsPossible, notTwoPossible;
+	wire twoPairs, notTwo;
 	twoPairsPossibleChecker(twoPairsPossible, notTwoPossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 	AN3(twoPairs, twoPairsPossible, notFour, notFull);				// 0.275 + 0.402 = 0.677
 	ND3(  notTwo, twoPairsPossible, notFour, notFull);				// 0.226 + 0.402 = 0.628
 
 	// one pair
-	wire onePair, onePairPossible, notOne, notOnePossible;
+	wire onePairPossible, notOnePossible;
+	wire onePair, notOne;
 	onePairPossibleChecker(onePairPossible, notOnePossible, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
 	AN3(onePair, onePairPossible, notThreePossible, notTwoPossible);
 	ND3( notOne, onePairPossible, notThreePossible, notTwoPossible);
 
-	wire straight;
-	straightChecker(straight, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
+	wire straight, notStraight;
+	straightChecker(straight, notStraight, i0[3:0], i1[3:0], i2[3:0], i3[3:0], i4[3:0]);
+
+	
+	wire [3:0] temp;
+	wire temp0Nand3;
+	assign temp[3] = 0;
+	ND2(temp[2], notFour, notFull);
+	ND3(temp[1], notFour, notThreePossible, notTwoPossible);
+	ND3(temp0Nand3, notFull, notTwoPossible, onePairPossible);
+	ND2(temp[0], notFour, temp0Nand3);
+
+	MUX4CBus(type, temp, 4'b0100, 4'b0101, 4'b1000, flush, straight);
+
+	// assign type[2:0] = 3'b000;
+	// assign type[3] = straight;
 
 	// output tester
-	reg [3:0] typeReg;
-	always @(*) begin
-		if(flush) begin
-			if(straight)		typeReg = 4'b1000;
-			else 				typeReg = 4'b0101;
-			// typeReg = 4'b0101;
-		end
-		else if(straight)		typeReg = 4'b0100;
-		else if(fourOfAKind)	typeReg = 4'b0111;
-		else if(fullHouse)		typeReg = 4'b0110;
-		else if(threeOfAKind)	typeReg = 4'b0011;
-		else if(twoPairs)		typeReg = 4'b0010;
-		else if(onePair)		typeReg = 4'b0001;
-		else					typeReg = 4'b0000;
-	end
+	// reg [3:0] typeReg;
+	// always @(*) begin
+	// 	if(flush) begin
+	// 		if(straight)		typeReg = 4'b1000;
+	// 		else 				typeReg = 4'b0101;
+	// 	end
+	// 	else if(straight)		typeReg = 4'b0100;
+	// 	else if(fourOfAKind)	typeReg = 4'b0111;
+	// 	else if(fullHouse)		typeReg = 4'b0110;
+	// 	else if(threeOfAKind)	typeReg = 4'b0011;
+	// 	else if(twoPairs)		typeReg = 4'b0010;
+	// 	else if(onePair)		typeReg = 4'b0001;
+	// 	else					typeReg = 4'b0000;
+	// end
+	// assign type = typeReg;
 endmodule
 
-module flushChecker(out, in0, in1, in2, in3, in4);
+module MUX4C(Z, A, B, C, D, CTRL1, CTRL2);
+	input A, B, C, D;		// 00, 01, 10, 11
+	input CTRL1, CTRL2;
+	output Z;
+
+	// cascading mux2 	, delay = mux2 + mux2 = 0.347 + 0.347 = 0.694
+	// advantage : CTRL2 can delay arriving
+	// since straight will be much slower than flush
+	// thus we use cascading mux rather than the direct case
+
+	wire mux1, mux2;
+	MUX21H(mux1, A, C, CTRL1);
+	MUX21H(mux2, B, D, CTRL1);
+	MUX21H(Z, mux1, mux2, CTRL2);
+endmodule
+
+module MUX4D(Z, A, B, C, D, CTRL1, CTRL2);
+	input A, B, C, D;		// 00, 01, 10, 11
+	input CTRL1, CTRL2;
+	output Z;
+
+	// directly			, delay = iv + nand3 + nand4 = 0.127 + 0.296 + 0.127 + 0.226 = 0.649
+	wire nCTRL1, nCTRL2;
+	IV(nCTRL1, CTRL1);
+	IV(nCTRL2, CTRL2);
+
+	wire nand31, nand32, nand33, nand34;
+	ND3(nand31, A, nCTRL1, nCTRL2);
+	ND3(nand32, B, nCTRL1,  CTRL2);
+	ND3(nand33, C,  CTRL1, nCTRL2);
+	ND3(nand34, D,  CTRL1,  CTRL2);
+
+	ND4(Z, nand31, nand32, nand33, nand34);
+endmodule
+
+module MUX4CBus(Z, A, B, C, D, CTRL1, CTRL2);
+	input [3:0] A, B, C, D;
+	input CTRL1, CTRL2;
+	output [3:0] Z;
+
+	// cascading case
+	MUX4C(Z[0], A[0], B[0], C[0], D[0], CTRL1, CTRL2);
+	MUX4C(Z[1], A[1], B[1], C[1], D[1], CTRL1, CTRL2);
+	MUX4C(Z[2], A[2], B[2], C[2], D[2], CTRL1, CTRL2);
+	MUX4C(Z[3], A[3], B[3], C[3], D[3], CTRL1, CTRL2);
+endmodule
+
+module MUX4DBus(Z, A, B, C, D, CTRL1, CTRL2);
+	input [3:0] A, B, C, D;
+	input CTRL1, CTRL2;
+	output [3:0] Z;
+
+	// cascading case
+	MUX4D(Z[0], A[0], B[0], C[0], D[0], CTRL1, CTRL2);
+	MUX4D(Z[1], A[1], B[1], C[1], D[1], CTRL1, CTRL2);
+	MUX4D(Z[2], A[2], B[2], C[2], D[2], CTRL1, CTRL2);
+	MUX4D(Z[3], A[3], B[3], C[3], D[3], CTRL1, CTRL2);
+endmodule
+
+module flushChecker(out, notOut, in0, in1, in2, in3, in4);
 	input [1:0] in0, in1, in2, in3, in4;
-	output out;
+	output out, notOut;
 
 	wire s5bc0, s5bc1;
 	same5BitChecker(s5bc0, in0[0], in1[0], in2[0], in3[0], in4[0]);
 	same5BitChecker(s5bc1, in0[1], in1[1], in2[1], in3[1], in4[1]);
 	
-	AN2(out, s5bc0, s5bc1);
+	AN2(   out, s5bc0, s5bc1);
+	ND2(notOut, s5bc0, s5bc1);
 endmodule
 
-module straightChecker(out, in0, in1, in2, in3, in4);
+module straightChecker(out, notOut, in0, in1, in2, in3, in4);
 	input [3:0] in0, in1, in2, in3, in4;
-	output out;
+	output out, notOut;
 
 	// case0 1,2,3,4,5
 	wire nCase0;
@@ -113,7 +193,8 @@ module straightChecker(out, in0, in1, in2, in3, in4);
 	wire nCase9;
 	exist5GoalChecker(nCase9, 4'b1010, 4'b1011, 4'b1100, 4'b1101, 4'b0001, in0, in1, in2, in3, in4);
 
-	ND10(out, nCase0, nCase1, nCase2, nCase3, nCase4, nCase5, nCase6, nCase7, nCase8, nCase9);
+	ND10(   out, nCase0, nCase1, nCase2, nCase3, nCase4, nCase5, nCase6, nCase7, nCase8, nCase9);
+	AN10(notOut, nCase0, nCase1, nCase2, nCase3, nCase4, nCase5, nCase6, nCase7, nCase8, nCase9);
 endmodule
 
 module exist5GoalChecker(notOut, goal0, goal1, goal2, goal3, goal4, in0, in1, in2, in3, in4);
