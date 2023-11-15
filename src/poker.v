@@ -47,16 +47,43 @@ module poker(type, i0, i1, i2, i3, i4);
 
 	
 	wire [3:0] temp;
+	wire [3:0] notTemp;
 	
 	assign temp[3] = 0;
+	assign temp[3] = 1;
+
 	ND2 T2(temp[2], notFour, notFull);
+	AN2 N2(notTemp[2], notFour, notFull);
+
 	ND3 T1(temp[1], notFour, notThreePossible, notTwoPossible);
+	AN3 N1(notTemp[1], notFour, notThreePossible, notTwoPossible);
 
 	wire temp0Nand2;
 	ND2 T01(temp0Nand2, notTwoPossible, onePairPossible);
 	ND2 T02(temp[0], notFour, temp0Nand2);
+	AN2 N02(notTemp[0], notFour, temp0Nand2);
 
-	MUX4CBus(type, temp, 4'b0100, 4'b0101, 4'b1000, flush, straight); // temp, straight too high
+	// type[3]
+	// MUX4C Type3(type[3], temp[3], 0, 0, 1, flush, straight);
+	// degrade into flush & straignt
+	AN2 Type3(type[3], flush, straight);
+
+	// type[2]
+	MUX4C Type2(type[2], temp[2], 1, 1, 0, flush, straight);
+
+	// type[1]
+	// MUX4C Type1(type[1], temp[1], 0, 0, 0, flush, straight);
+	// degrade into temp[1] & flush' & straight'
+	AN3 Type1(type[1], temp[1], notFlush, notStraight);
+	
+
+	// type[0]
+	// MUX4C Type0(type[0], temp[0], 0, 1, 0, flush, straight);
+	// degrade into straight' & (temp[1]' & flush')'
+	wire nd2_notST_notTemp0;
+	ND2 Type0temp(nd2_notST_notTemp0, notFlush, notTemp[0]);
+	AN2 Type0(type[0], notStraight, nd2_notST_notTemp0);
+
 
 // output tester
 	// reg [3:0] typeReg;
@@ -375,8 +402,8 @@ module twoPairsPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	twoPairsPossibleSubChecker(sub1234, nSub1234, in1, in2, in3, in4);
 
 	OR5(   out,  sub0123,  sub0124,  sub0134,  sub0234,  sub1234);
-	NR5(notout,  sub0123,  sub0124,  sub0134,  sub0234,  sub1234);
-	// ND5(notOut, nSub0123, nSub0124, nSub0134, nSub0234, nSub1234);
+	// NR5(notout,  sub0123,  sub0124,  sub0134,  sub0234,  sub1234);
+	AN5(notOut, nSub0123, nSub0124, nSub0134, nSub0234, nSub1234);
 endmodule
 
 module twoPairsPossibleSubChecker(out, notOut, in0, in1, in2, in3);
@@ -402,14 +429,14 @@ module twoPairsPossibleSubChecker(out, notOut, in0, in1, in2, in3);
 	// case0 : check if rank0 = rank1 = x and rank2 = rank3 = y but x != y
 	ND2(case0, same01, same23);
 
-	// case1 :  check if rank0 = rank2 = x and rank1 = rank3 = y but x != y]
+	// case1 : check if rank0 = rank2 = x and rank1 = rank3 = y but x != y]
 	ND2(case1, same02, same13);
 
 	// case2 : check if rank0 = rank3 = x and rank1 = rank2 = y but x != y
 	ND2(case2, same03, same12);
 
 	ND3(   out, case0, case1, case2);
-	AN3(notOut, case0, case1, casae2);
+	AN3(notOut, case0, case1, case2);
 endmodule
 
 module onePairPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
@@ -544,21 +571,16 @@ module identical2RanksChecker(out, notOut, in0, in1);
 
 	// out = xnor +  and4 = 0.470 + 0.371 = 0.841
 	//	   =  xor +  nor4 = 0.343 + 0.345 = 0.688  <-- choose this
-	// out'= xnor + nand4 = 0.470 + 0.296 = 0.766  <-- choose this
-	//	   =  xor +   or4 = 0.343 + 0.472 = 0.815
+	// out'= xnor + nand4 = 0.470 + 0.296 = 0.766
+	//	   =  xor +   or4 = 0.343 + 0.403 = 0.746  <-- choose this
 	wire xor0, xor1, xor2, xor3;
 	EO(xor0, in0[0], in1[0]);
 	EO(xor1, in0[1], in1[1]);
 	EO(xor2, in0[2], in1[2]);
 	EO(xor3, in0[3], in1[3]);
-	NR4(out, xor0, xor1, xor2, xor3);
 
-	wire xnor0, xnor1, xnor2, xnor3;
-	XNOR2(xnor0, in0[0], in1[0]);
-	XNOR2(xnor1, in0[1], in1[1]);
-	XNOR2(xnor2, in0[2], in1[2]);
-	XNOR2(xnor3, in0[3], in1[3]);
-	ND4(notOut, xnor0, xnor1, xnor2, xnor3);
+	NR4(out, xor0, xor1, xor2, xor3);
+	Or4low(notOut, xor0, xor1, xor2, xor3);
 endmodule
 
 module XNOR2(Z, A, B);
@@ -679,9 +701,10 @@ module ND6(Z,A,B,C,D,E,F);
 endmodule
 
 module AN6(Z,A,B,C,D,E,F);
-	// and8
+	// and6
 	// F = (abc)(def)					, delay =   and3 + and2 = 0.275 + 0.225 = 0.500
 	//   = [(abc)'+(def)']'				, delay =  nand3 + nor2 = 0.226 + 0.227 = 0.453  <-- choose this
+	//	 = [(ab)'+(cd)'+(ef)']'			, delay =  nand2 + nor3 = 0.176 + 0.345 = 0.521
 	input A, B, C, D, E, F;
 	output Z;
 	
@@ -689,6 +712,34 @@ module AN6(Z,A,B,C,D,E,F);
 	ND3(nand31, A, B, C);
 	ND3(nand32, D, E, F);
 	NR2(Z, nand31, nand32);
+endmodule
+
+module OR8(Z,A,B,C,D,E,F,G,H);
+	// nor8
+	// F = (a+b+c)'(d+e+f)'(g+h)		, delay =  nor3 + and3 = 0.345 + 0.275 = 0.620
+	//   = (a+b+c+d)'(e+f+g+h)'			, delay =  nor4 + and2 = 0.345 + 0.225 = 0.570  <-- choose this
+	//   = (a+b)'(c+d)'(e+f)'(g+h)'		, delay =  nor2 + and4 = 0.227 + 0.371 = 0.598
+	input A,B,C,D;
+	input E,F,G,H;
+	output Z;
+	wire nor41, nor42;
+	NR4(nor41,A,B,C,D);
+	NR4(nor42,E,F,G,H);
+	ND2(Z, nor41, nor42);
+endmodule
+
+module NR8(Z,A,B,C,D,E,F,G,H);
+	// nor8
+	// F = [(a+b+c)'(d+e+f)'(g+h)]'			, delay =  nor3 + nand3 = 0.345 + 0.226 = 0.571
+	//   = [(a+b+c+d)'(e+f+g+h)']'			, delay =  nor4 + nand2 = 0.345 + 0.176 = 0.521  <-- choose this
+	//   = [(a+b)'(c+d)'(e+f)'(g+h)']'		, delay =  nor2 + nand4 = 0.227 + 0.296 = 0.523
+	input A,B,C,D;
+	input E,F,G,H;
+	output Z;
+	wire nor41, nor42;
+	NR4(nor41,A,B,C,D);
+	NR4(nor42,E,F,G,H);
+	ND2(Z, nor41, nor42);
 endmodule
 
 module ND8(Z,A,B,C,D,E,F,G,H);
