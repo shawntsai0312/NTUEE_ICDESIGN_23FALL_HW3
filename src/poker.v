@@ -37,7 +37,7 @@ module poker(type, i0, i1, i2, i3, i4);
 	wire [3:0] notTemp;
 	
 	assign temp[3] = 0;
-	assign notemp[3] = 1;
+	assign notTemp[3] = 1;
 
 	ND2 T2(temp[2], notFour, notFull);
 	AN2 N2(notTemp[2], notFour, notFull);
@@ -339,7 +339,7 @@ module twoPairsPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	output out, notOut;
 
 	wire  sub0123,  sub0124,  sub0134,  sub0234, sub1234;
-	wire nSub0123, nSub0124, nSub0134, nSub0234, sub1234;
+	wire nSub0123, nSub0124, nSub0134, nSub0234, nSub1234;
 	twoPairsPossibleSubChecker(sub0123, nSub0123, in0, in1, in2, in3);
 	twoPairsPossibleSubChecker(sub0124, nSub0124, in0, in1, in2, in4);
 	twoPairsPossibleSubChecker(sub0134, nSub0134, in0, in1, in3, in4);
