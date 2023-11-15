@@ -32,17 +32,10 @@ cd src
 * flush checker
   * the first two bits of all five cards should be the same
 * straight checker
-  * There are total 10 cases, each case has 5!(=120) possibilities
-  * neighbor checker, rank difference = 1
-    * 5 cards, 3 have 2 neighbors, 2 have 1 neighbor, with no ranks are the same (not onePairPossible)
-  * 10,11,12,13,1 detecter
-* identical 4 ranks checker
-  * input four cards and determine if they are the same rank, parallel*5
-  * if one of them is true, then it's 4 of a kind
+  * directly detect all 10 cases
+  * detect if a certain rank exist among all of the cards
+* four of a kind checker
 * full house checker
-  * combine three of a kind checker and one pair checker, parallel*10
-* identical 3 ranks checker
-  * input three cards and determine if they are the same rank, parallel*10
-  * if the output of full house checker and four of a kind checker are both false, then it's true
-* two pair checker
+* three of a kind checker
+* two pairs checker
 * one pair checker
