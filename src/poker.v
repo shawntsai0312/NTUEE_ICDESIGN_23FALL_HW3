@@ -550,18 +550,18 @@ endmodule
 // 	Or4low(Z, A, B, C, 1'b0);
 // endmodule
 
-// module Or4low(Z,A,B,C,D);
-// 	input A, B, C, D;
-// 	output Z;
+module Or4low(Z,A,B,C,D);
+	input A, B, C, D;
+	output Z;
 
-// 	// original or4 = 0.544
-// 	// z = a + b + c + d
-// 	//   = [(a+b)'&(c+d)']'		, delay = nor2 + nand2 = 0.227 + 0.176 = 0.403
-// 	wire nor21, nor22;
-// 	NR2(nor21, A, B);
-// 	NR2(nor22, C, D);
-// 	ND2(Z, nor21, nor22);
-// endmodule
+	// original or4 = 0.544
+	// z = a + b + c + d
+	//   = [(a+b)'&(c+d)']'		, delay = nor2 + nand2 = 0.227 + 0.176 = 0.403
+	wire nor21, nor22;
+	NR2(nor21, A, B);
+	NR2(nor22, C, D);
+	ND2(Z, nor21, nor22);
+endmodule
 
 module OR5(Z,A,B,C,D,E);
 	// or 5
