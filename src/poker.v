@@ -432,6 +432,50 @@ module onePairPossibleChecker(out, notOut, in0, in1, in2, in3, in4);
 	NR10(notOut, i2rc01, i2rc02, i2rc03, i2rc04, i2rc12, i2rc13, i2rc14, i2rc23, i2rc24, i2rc34);
 endmodule
 
+module identical4RanksChecker(out, in0, in1, in2, in3);
+	input [3:0] in0, in1, in2, in3;
+	output out;
+
+	wire s4bc0, s4bc1, s4bc2, s4bc3;
+	same4BitChecker(s4bc0, in0[0], in1[0], in2[0], in3[0]);
+	same4BitChecker(s4bc1, in0[1], in1[1], in2[1], in3[1]);
+	same4BitChecker(s4bc2, in0[2], in1[2], in2[2], in3[2]);
+	same4BitChecker(s4bc3, in0[3], in1[3], in2[3], in3[3]);
+
+	AN4(out, s4bc0, s4bc1, s4bc2, s4bc3);
+endmodule
+
+module identical3RanksChecker(out, in0, in1, in2);
+	input [3:0] in0, in1, in2;
+	output out;
+
+	wire s3bc0, s3bc1, s3bc2, s3bc3;
+	same3BitChecker(s3bc0, in0[0], in1[0], in2[0]);
+	same3BitChecker(s3bc1, in0[1], in1[1], in2[1]);
+	same3BitChecker(s3bc2, in0[2], in1[2], in2[2]);
+	same3BitChecker(s3bc3, in0[3], in1[3], in2[3]);
+
+	AN4(out, s3bc0, s3bc1, s3bc2, s3bc3);
+endmodule
+
+module identical2RanksChecker(out, notOut, in0, in1);
+	input [3:0] in0, in1;
+	output out, notOut;
+
+	// out = xnor +  and4 = 0.470 + 0.371 = 0.841
+	//	   =  xor +  nor4 = 0.343 + 0.345 = 0.688  <-- choose this
+	// out'= xnor + nand4 = 0.470 + 0.296 = 0.766
+	//	   =  xor +   or4 = 0.343 + 0.403 = 0.746  <-- choose this
+	wire xor0, xor1, xor2, xor3;
+	EO(xor0, in0[0], in1[0]);
+	EO(xor1, in0[1], in1[1]);
+	EO(xor2, in0[2], in1[2]);
+	EO(xor3, in0[3], in1[3]);
+
+	NR4(out, xor0, xor1, xor2, xor3);
+	OR4low(notOut, xor0, xor1, xor2, xor3);
+endmodule
+
 module same5BitChecker(out, in0, in1, in2, in3, in4);
 	input in0, in1, in2, in3, in4;
 	output out;
@@ -482,50 +526,6 @@ module same3BitChecker(out, in0, in1, in2);
 	EO(xor1, in0, in1);
 	EO(xor2, in1, in2);
 	NR2(out, xor1, xor2);
-endmodule
-
-module identical4RanksChecker(out, in0, in1, in2, in3);
-	input [3:0] in0, in1, in2, in3;
-	output out;
-
-	wire s4bc0, s4bc1, s4bc2, s4bc3;
-	same4BitChecker(s4bc0, in0[0], in1[0], in2[0], in3[0]);
-	same4BitChecker(s4bc1, in0[1], in1[1], in2[1], in3[1]);
-	same4BitChecker(s4bc2, in0[2], in1[2], in2[2], in3[2]);
-	same4BitChecker(s4bc3, in0[3], in1[3], in2[3], in3[3]);
-
-	AN4(out, s4bc0, s4bc1, s4bc2, s4bc3);
-endmodule
-
-module identical3RanksChecker(out, in0, in1, in2);
-	input [3:0] in0, in1, in2;
-	output out;
-
-	wire s3bc0, s3bc1, s3bc2, s3bc3;
-	same3BitChecker(s3bc0, in0[0], in1[0], in2[0]);
-	same3BitChecker(s3bc1, in0[1], in1[1], in2[1]);
-	same3BitChecker(s3bc2, in0[2], in1[2], in2[2]);
-	same3BitChecker(s3bc3, in0[3], in1[3], in2[3]);
-
-	AN4(out, s3bc0, s3bc1, s3bc2, s3bc3);
-endmodule
-
-module identical2RanksChecker(out, notOut, in0, in1);
-	input [3:0] in0, in1;
-	output out, notOut;
-
-	// out = xnor +  and4 = 0.470 + 0.371 = 0.841
-	//	   =  xor +  nor4 = 0.343 + 0.345 = 0.688  <-- choose this
-	// out'= xnor + nand4 = 0.470 + 0.296 = 0.766
-	//	   =  xor +   or4 = 0.343 + 0.403 = 0.746  <-- choose this
-	wire xor0, xor1, xor2, xor3;
-	EO(xor0, in0[0], in1[0]);
-	EO(xor1, in0[1], in1[1]);
-	EO(xor2, in0[2], in1[2]);
-	EO(xor3, in0[3], in1[3]);
-
-	NR4(out, xor0, xor1, xor2, xor3);
-	OR4low(notOut, xor0, xor1, xor2, xor3);
 endmodule
 
 module XNOR2(Z, A, B);

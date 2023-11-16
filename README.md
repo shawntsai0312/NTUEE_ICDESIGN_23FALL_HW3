@@ -26,16 +26,5 @@ cd src
 |7       |four of a kind |
 |8       |straight flush |
 
-* Ace cannot be in the middle of a straight or a straight flush
-* degrade into a high card or a flush
-
-* flush checker
-  * the first two bits of all five cards should be the same
-* straight checker
-  * directly detect all 10 cases
-  * detect if a certain rank exist among all of the cards
-* four of a kind checker
-* full house checker
-* three of a kind checker
-* two pairs checker
-* one pair checker
+#### Info
+* For more information, please check out pdfs in the doc directory
