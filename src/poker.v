@@ -374,7 +374,7 @@ module twoPairsPossibleSubChecker(out, notOut, in0, in1, in2, in3);
 	// case0 : check if rank0 = rank1 = x and rank2 = rank3 = y but x != y
 	ND2(case0, same01, same23);
 
-	// case1 : check if rank0 = rank2 = x and rank1 = rank3 = y but x != y]
+	// case1 : check if rank0 = rank2 = x and rank1 = rank3 = y but x != y
 	ND2(case1, same02, same13);
 
 	// case2 : check if rank0 = rank3 = x and rank1 = rank2 = y but x != y
