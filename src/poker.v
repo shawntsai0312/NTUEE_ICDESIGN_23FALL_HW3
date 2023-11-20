@@ -660,10 +660,10 @@ module ND6(Z,A,B,C,D,E,F);
 endmodule
 
 module OR8(Z,A,B,C,D,E,F,G,H);
-	// nor8
-	// F = (a+b+c)'(d+e+f)'(g+h)		, delay =  nor3 + and3 = 0.345 + 0.275 = 0.620
-	//   = (a+b+c+d)'(e+f+g+h)'			, delay =  nor4 + and2 = 0.345 + 0.225 = 0.570  <-- choose this
-	//   = (a+b)'(c+d)'(e+f)'(g+h)'		, delay =  nor2 + and4 = 0.227 + 0.371 = 0.598
+	// or8
+	// F = [(a+b+c)'(d+e+f)'(g+h)]'			, delay =  nor3 + nand3 = 0.345 + 0.226 = 0.571
+	//   = [(a+b+c+d)'(e+f+g+h)']'			, delay =  nor4 + nand2 = 0.345 + 0.176 = 0.521  <-- choose this
+	//   = [(a+b)'(c+d)'(e+f)'(g+h)']'		, delay =  nor2 + nand4 = 0.227 + 0.296 = 0.523
 	input A,B,C,D;
 	input E,F,G,H;
 	output Z;
@@ -675,16 +675,16 @@ endmodule
 
 module NR8(Z,A,B,C,D,E,F,G,H);
 	// nor8
-	// F = [(a+b+c)'(d+e+f)'(g+h)]'			, delay =  nor3 + nand3 = 0.345 + 0.226 = 0.571
-	//   = [(a+b+c+d)'(e+f+g+h)']'			, delay =  nor4 + nand2 = 0.345 + 0.176 = 0.521  <-- choose this
-	//   = [(a+b)'(c+d)'(e+f)'(g+h)']'		, delay =  nor2 + nand4 = 0.227 + 0.296 = 0.523
+	// F = (a+b+c)'(d+e+f)'(g+h)		, delay =  nor3 + and3 = 0.345 + 0.275 = 0.620
+	//   = (a+b+c+d)'(e+f+g+h)'			, delay =  nor4 + and2 = 0.345 + 0.225 = 0.570  <-- choose this
+	//   = (a+b)'(c+d)'(e+f)'(g+h)'		, delay =  nor2 + and4 = 0.227 + 0.371 = 0.598
 	input A,B,C,D;
 	input E,F,G,H;
 	output Z;
 	wire nor41, nor42;
 	NR4(nor41,A,B,C,D);
 	NR4(nor42,E,F,G,H);
-	ND2(Z, nor41, nor42);
+	AN2(Z, nor41, nor42);
 endmodule
 
 module AN8(Z,A,B,C,D,E,F,G,H);
